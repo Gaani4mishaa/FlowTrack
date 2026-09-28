@@ -2,6 +2,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.password_validation import validate_password
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.shortcuts import render, redirect
 
 from accounts.models import User
@@ -79,8 +80,17 @@ def register_page(request):
             messages.error(request, 'Please complete all required fields.')
             return render(request, 'core/register.html')
 
+        try:
+            validate_email(email)
+        except ValidationError:
+            messages.error(request, 'Enter a valid email address.')
+            return render(request, 'core/register.html')
+
         if not terms_accepted:
-            messages.error(request, 'Please accept the Terms of Use and Privacy Policy.')
+            messages.error(
+                request,
+                'Confirm that your information is accurate and does not include sensitive personal data.',
+            )
             return render(request, 'core/register.html')
 
         if password != confirm_password:
