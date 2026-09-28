@@ -1,0 +1,18 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Delete report | FlowTrack{% endblock %}
+
+{% block content %}
+<section class="confirm-page">
+    <div class="confirm-panel">
+        <span class="eyebrow">Remove report</span>
+        <h1>Delete this report?</h1>
+        <p>This will permanently remove your <strong>{{ report.get_issue_type_display }}</strong> report for <strong>{{ report.area }}, {{ report.county }}</strong>. This action cannot be undone.</p>
+        <form method="post" class="confirm-actions">
+            {% csrf_token %}
+            <a class="btn btn-secondary" href="{% url 'report_detail' report.id %}">Keep report</a>
+            <button class="btn btn-danger" type="submit">Delete report</button>
+        </form>
+    </div>
+</section>
+{% endblock %}

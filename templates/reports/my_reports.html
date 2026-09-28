@@ -1,0 +1,113 @@
+{% extends 'core/base.html' %}
+
+{% block title %}
+My Reports | FlowTrack
+{% endblock %}
+
+{% block content %}
+
+<section class="reports-page">
+
+    <div class="reports-container">
+
+        <div class="reports-header">
+            <span class="eyebrow">Resident reports</span>
+
+            <h1>My reports</h1>
+
+            <p>
+                Follow the progress of drainage problems you have reported
+                and keep track of their current status.
+            </p>
+        </div>
+
+        {% if reports %}
+
+            <div class="reports-list">
+
+                {% for report in reports %}
+
+                   <a href="{% url 'report_detail' report.id %}" class="report-list-card">
+
+                        <div class="report-list-main">
+
+                            <div class="report-list-title">
+                                <h2>
+                                    {{ report.get_issue_type_display }}
+                                </h2>
+
+                                <span class="report-status status-{{ report.status }}">
+                                    {{ report.get_status_display }}
+                                </span>
+                            </div>
+
+                            <p class="report-location">
+                                {{ report.area }}, {{ report.county }}
+                            </p>
+
+                            {% if report.location_description %}
+                                <p class="report-location-detail">
+                                    {{ report.location_description }}
+                                </p>
+                            {% endif %}
+
+                            {% if report.description %}
+                                <p class="report-description">
+                                    {{ report.description|truncatewords:25 }}
+                                </p>
+                            {% endif %}
+
+                        </div>
+
+                        <div class="report-list-meta">
+
+                            <div>
+                                <span>Report ID</span>
+                                <strong>#{{ report.id }}</strong>
+                            </div>
+
+                            <div>
+                                <span>Priority</span>
+                                <strong>{{ report.get_priority_display }}</strong>
+                            </div>
+
+                            <div>
+                                <span>Submitted</span>
+                                <strong>{{ report.created_at|date:"d M Y" }}</strong>
+                            </div>
+
+                        </div>
+
+               </a>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="reports-empty">
+
+                <div class="empty-icon">+</div>
+
+                <h2>No reports yet</h2>
+
+                <p>
+                    You have not submitted any drainage reports yet.
+                    When you report an issue, you will be able to track
+                    its progress here.
+                </p>
+
+                <a href="{% url 'report_issue' %}" class="btn btn-primary">
+                    Report an issue
+                </a>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</section>
+
+{% endblock %}

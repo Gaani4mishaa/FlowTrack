@@ -1,0 +1,73 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}
+FlowTrack | Smarter Drainage Management
+{% endblock %}
+
+{% block content %}
+
+<section class="hero">
+    <img class="hero-image" src="{% static 'images/urban-flooding.jpg' %}" alt="Floodwater covering an urban road and submerging vehicles" fetchpriority="high">
+    <div class="hero-shade" aria-hidden="true"></div>
+    <span class="hero-image-credit">Illustrative flood photograph</span>
+    <div class="container hero-inner">
+        <div class="hero-content">
+            <span class="eyebrow">Community drainage reporting</span>
+            <h1>FlowTrack</h1>
+            <h2>See a drainage problem? Put it on the record.</h2>
+            <p>Share the location, a photo and what you observed. Keep a clear record of your report and follow its status.</p>
+            <div class="hero-actions">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'report_issue' %}" class="btn btn-primary">Report a drainage problem</a>
+                    <a href="{% url 'my_reports' %}" class="btn btn-light">View my reports</a>
+                {% else %}
+                    <a href="{% url 'register' %}" class="btn btn-primary">Create an account</a>
+                    <a href="{% url 'login' %}" class="btn btn-light">Sign in</a>
+                {% endif %}
+            </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<section class="features">
+    <div class="container">
+        <div class="home-section-heading" id="how-it-works">
+            <span class="eyebrow">A clear reporting process</span>
+            <h2>From observation to a tracked report</h2>
+        </div>
+
+        <div class="feature-grid">
+
+            <article class="feature-card">
+                <span class="feature-index">01 / REPORT</span>
+                <h3>Describe the issue</h3>
+                <p>
+                    Choose a drainage issue and add its area, location details and optional photo evidence.
+                </p>
+            </article>
+
+            <article class="feature-card">
+                <span class="feature-index">02 / REVIEW</span>
+                <h3>Keep a record</h3>
+                <p>
+                    Your submission is stored with a timestamp and status for authorized review.
+                </p>
+            </article>
+
+            <article class="feature-card">
+                <span class="feature-index">03 / TRACK</span>
+                <h3>Follow progress</h3>
+                <p>
+                    Return to your report history to see the latest recorded status.
+                </p>
+            </article>
+
+        </div>
+
+    </div>
+</section>
+
+{% endblock %}

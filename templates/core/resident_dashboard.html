@@ -1,0 +1,200 @@
+{% extends 'core/base.html' %}
+
+{% block title %}
+My Dashboard | FlowTrack
+{% endblock %}
+
+{% block content %}
+
+<section class="dashboard-page">
+
+    <div class="dashboard-container">
+
+        <header class="dashboard-header">
+            <div>
+                <span class="eyebrow">Resident dashboard</span>
+
+                <h1>
+                    Welcome back<span id="resident-name"></span>.
+                </h1>
+
+                <p>
+                    Report drainage problems, follow your submissions,
+                    and stay informed about issues affecting your community.
+                </p>
+            </div>
+
+            <a href="{% url 'report_issue' %}" class="btn btn-primary">
+                Report an Issue
+            </a>
+        </header>
+
+
+        <section class="dashboard-stats" aria-label="Report summary">
+
+            <article class="dashboard-stat-card">
+                <span class="stat-label">My reports</span>
+                <strong>{{ total_reports }}</strong>
+                <span class="stat-description">
+                    Reports submitted by you
+                </span>
+            </article>
+
+            <article class="dashboard-stat-card">
+                <span class="stat-label">In progress</span>
+               <strong>{{ in_progress_reports }}</strong>
+                <span class="stat-description">
+                    Reports currently being handled
+                </span>
+            </article>
+
+            <article class="dashboard-stat-card">
+                <span class="stat-label">Resolved</span>
+              <strong>{{ resolved_reports }}</strong>
+                <span class="stat-description">
+                    Issues resolved from your reports
+                </span>
+            </article>
+
+        </section>
+
+
+        <section class="dashboard-section">
+
+            <div class="section-heading">
+                <div>
+                    <h2>My recent reports</h2>
+                    <p>
+                        Follow the progress of issues you have submitted.
+                    </p>
+                </div>
+
+                <a href="{% url 'my_reports' %}" class="section-link">
+                    View all
+                </a>
+            </div>
+
+
+         {% if recent_reports %}
+
+    <div class="recent-reports-list">
+
+        {% for report in recent_reports %}
+
+            <article class="recent-report-card">
+
+                <div class="recent-report-main">
+
+                    <h3>
+                        {{ report.get_issue_type_display }}
+                    </h3>
+
+                    <p class="recent-report-location">
+                        {{ report.area }}, {{ report.county }}
+                    </p>
+
+                </div>
+
+                <div class="recent-report-status">
+
+                    <span class="report-status status-{{ report.status }}">
+                        {{ report.get_status_display }}
+                    </span>
+
+                    <span class="recent-report-date">
+                        {{ report.created_at|date:"d M Y" }}
+                    </span>
+
+                </div>
+
+            </article>
+
+        {% endfor %}
+
+    </div>
+
+{% else %}
+
+    <div class="empty-state">
+
+        <div class="empty-state-icon">
+            +
+        </div>
+
+        <h3>No reports yet</h3>
+
+        <p>
+            Have you noticed a blocked drain, flooding,
+            damaged culvert, or another drainage problem?
+            Report it and help your community stay safer.
+        </p>
+
+        <a href="{% url 'report_issue' %}" class="btn btn-primary">
+            Report your first issue
+        </a>
+
+    </div>
+
+{% endif %}
+
+        </section>
+
+
+        <section class="dashboard-section">
+
+            <div class="section-heading">
+                <div>
+                    <h2>How FlowTrack works</h2>
+                    <p>
+                        Your report moves through a clear response process.
+                    </p>
+                </div>
+            </div>
+
+
+            <div class="process-grid">
+
+                <article class="process-card">
+                    <span class="process-number">01</span>
+
+                    <h3>Report</h3>
+
+                    <p>
+                        Submit the location, type of problem,
+                        photos, and useful details.
+                    </p>
+                </article>
+
+
+                <article class="process-card">
+                    <span class="process-number">02</span>
+
+                    <h3>Prioritize</h3>
+
+                    <p>
+                        The responsible organization reviews
+                        the issue and determines its priority.
+                    </p>
+                </article>
+
+
+                <article class="process-card">
+                    <span class="process-number">03</span>
+
+                    <h3>Resolve</h3>
+
+                    <p>
+                        Maintenance teams handle the issue and
+                        update its status until resolution.
+                    </p>
+                </article>
+
+            </div>
+
+        </section>
+
+    </div>
+
+</section>
+
+{% endblock %}

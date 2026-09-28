@@ -1,0 +1,222 @@
+{% extends 'core/base.html' %}
+
+{% block title %}
+Report #{{ report.id }} | FlowTrack
+{% endblock %}
+
+{% block content %}
+
+<section class="report-detail-page">
+
+    <div class="report-detail-container">
+
+        <a href="{% url 'my_reports' %}" class="back-link">
+            ← Back to My Reports
+        </a>
+
+        <header class="report-detail-header">
+
+            <div>
+                <span class="eyebrow">Report #{{ report.id }}</span>
+
+                <h1>
+                    {{ report.get_issue_type_display }}
+                </h1>
+
+                <p>
+                    Submitted on {{ report.created_at|date:"d M Y, H:i" }}
+                </p>
+            </div>
+
+            <span class="report-status status-{{ report.status }}">
+                {{ report.get_status_display }}
+            </span>
+
+        </header>
+
+        {% if can_manage_report %}
+            <div class="report-management-actions" aria-label="Report actions">
+                <a class="btn btn-secondary" href="{% url 'edit_report' report.id %}">Edit report</a>
+                <a class="btn btn-danger-outline" href="{% url 'delete_report' report.id %}">Delete report</a>
+            </div>
+        {% endif %}
+
+
+        <div class="report-detail-layout">
+
+            <main class="report-detail-card">
+
+                <section class="detail-section">
+
+                    <h2>Issue information</h2>
+
+                    <div class="detail-grid">
+
+                        <div class="detail-item">
+                            <span>Issue type</span>
+                            <strong>
+                                {{ report.get_issue_type_display }}
+                            </strong>
+                        </div>
+
+                        <div class="detail-item">
+                            <span>Priority</span>
+                            <strong>
+                                {{ report.get_priority_display }}
+                            </strong>
+                        </div>
+
+                        <div class="detail-item">
+                            <span>County</span>
+                            <strong>
+                                {{ report.county }}
+                            </strong>
+                        </div>
+
+                        <div class="detail-item">
+                            <span>Area / estate</span>
+                            <strong>
+                                {{ report.area }}
+                            </strong>
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <section class="detail-section">
+
+                    <h2>Location</h2>
+
+                    {% if report.location_description %}
+                        <p class="detail-text">
+                            {{ report.location_description }}
+                        </p>
+                    {% else %}
+                        <p class="detail-muted">
+                            No additional location details were provided.
+                        </p>
+                    {% endif %}
+
+                    {% if report.latitude and report.longitude %}
+                        <div class="coordinates">
+                            <span>Coordinates</span>
+                            <strong>
+                                {{ report.latitude }}, {{ report.longitude }}
+                            </strong>
+                            <a href="https://www.google.com/maps?q={{ report.latitude }},{{ report.longitude }}" target="_blank" rel="noopener">Open map</a>
+                        </div>
+                    {% endif %}
+
+                </section>
+
+
+                <section class="detail-section">
+
+                    <h2>Description</h2>
+
+                    {% if report.description %}
+                        <p class="detail-text">
+                            {{ report.description }}
+                        </p>
+                    {% else %}
+                        <p class="detail-muted">
+                            No additional description was provided.
+                        </p>
+                    {% endif %}
+
+                </section>
+
+
+                {% if report.photo %}
+
+                    <section class="detail-section">
+
+                        <h2>Evidence</h2>
+
+                        <div class="report-detail-photo">
+                            <img
+                                src="{{ report.photo.url }}"
+                                alt="Evidence uploaded for this drainage report"
+                            >
+                        </div>
+
+                    </section>
+
+                {% endif %}
+
+            </main>
+
+
+            <aside class="report-detail-side">
+
+                <div class="status-card">
+
+                    <span class="eyebrow">Current status</span>
+
+                    <h2>
+                        {{ report.get_status_display }}
+                    </h2>
+
+                    <p>
+                        Your report has been submitted and is currently
+                        in the FlowTrack response process.
+                    </p>
+
+                </div>
+
+
+<div class="timeline-step {% if report.status == 'submitted' %}timeline-active{% endif %}">
+    <span>01</span>
+<div>
+<strong>Report submitted</strong>
+<p>
+Your drainage issue has been recorded.
+ </p>
+</div>
+</div>
+
+<div class="timeline-step {% if report.status == 'under_review' %}timeline-active{% endif %}">
+    <span>02</span>
+ <div>
+<strong>Review and prioritization</strong>
+<p>
+The responsible organization reviews the issue.
+</p>
+</div>
+</div>
+
+<div class="timeline-step {% if report.status == 'assigned' or report.status == 'in_progress' %}timeline-active{% endif %}">
+    <span>03</span>
+
+    <div>
+        <strong>Maintenance action</strong>
+        <p>
+            The issue can be assigned to a maintenance team.
+        </p>
+    </div>
+</div>
+
+ <div class="timeline-step {% if report.status == 'resolved' or report.status == 'closed' %}timeline-active{% endif %}">
+<span>04</span>
+
+    <div>
+  <strong>Resolution</strong>
+  <p>
+ The report is updated when the issue has been resolved.
+        </p>
+    </div>
+</div>
+
+                </div>
+
+            </aside>
+
+        </div>
+
+    </div>
+
+</section>
+
+{% endblock %}

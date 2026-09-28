@@ -1,0 +1,186 @@
+{% extends 'core/base.html' %}
+
+{% block title %}
+Create an account | FlowTrack
+{% endblock %}
+
+{% block content %}
+
+<section class="auth-page">
+    <div class="auth-container">
+
+        <div class="auth-intro">
+            <span class="eyebrow">Join FlowTrack</span>
+
+            <h1>Create your FlowTrack account.</h1>
+
+            <p class="auth-description">
+                Create an account to report drainage problems, follow updates,
+                and keep a record of issues affecting your community.
+            </p>
+
+            <div class="auth-highlights">
+                <div class="auth-highlight">
+                    <span class="auth-highlight-icon">01</span>
+                    <div>
+                        <strong>Report with confidence</strong>
+                        <p>Submit useful reports with locations, photos, and details.</p>
+                    </div>
+                </div>
+
+                <div class="auth-highlight">
+                    <span class="auth-highlight-icon">02</span>
+                    <div>
+                        <strong>Follow progress</strong>
+                        <p>Keep track of what happens after your report is submitted.</p>
+                    </div>
+                </div>
+
+                <div class="auth-highlight">
+                    <span class="auth-highlight-icon">03</span>
+                    <div>
+                        <strong>Help your community</strong>
+                        <p>Better information helps organizations respond more effectively.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="auth-card">
+
+            <div class="auth-card-header">
+                <h2>Create account</h2>
+                <p>It only takes a few details to get started.</p>
+            </div>
+
+            <form method="post">
+
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="full_name">Full name</label>
+                    <input
+                        type="text"
+                        id="full_name"
+                        name="full_name"
+                        placeholder="Enter your full name"
+                        autocomplete="name"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email address</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="you@example.com"
+                        autocomplete="email"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="phone_number">Phone number</label>
+                    <input
+                        type="tel"
+                        id="phone_number"
+                        name="phone_number"
+                        placeholder="+254 7XX XXX XXX"
+                        autocomplete="tel"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+
+                    <div class="password-field">
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            placeholder="Create a strong password"
+                            autocomplete="new-password"
+                            required
+                        >
+
+                        <button
+                            type="button"
+                            class="password-toggle"
+                            id="password-toggle"
+                            aria-label="Show password"
+                        >
+                            Show
+                        </button>
+                    </div>
+
+                    <p class="field-hint">
+                        Use at least 8 characters with a mix of letters, numbers,
+                        and symbols.
+                    </p>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm_password">Confirm password</label>
+
+                    <div class="password-field">
+                        <input
+                            type="password"
+                            id="confirm_password"
+                            name="confirm_password"
+                            placeholder="Re-enter your password"
+                            autocomplete="new-password"
+                            required
+                        >
+                    </div>
+                </div>
+
+                <label class="terms-check">
+                    <input
+                        type="checkbox"
+                        name="terms"
+                        required
+                    >
+
+                    <span>
+                        I confirm that my report information is accurate and I will not upload sensitive personal data.
+                    </span>
+                </label>
+
+                <button type="submit" class="btn btn-primary auth-submit">
+                    Create account
+                </button>
+
+            </form>
+
+            <div class="auth-divider">
+                <span>Already have an account?</span>
+            </div>
+
+            <a href="{% url 'login' %}" class="btn btn-secondary auth-register">
+                Sign in
+            </a>
+
+        </div>
+
+    </div>
+</section>
+
+<script>
+    const passwordInput = document.getElementById('password');
+    const passwordToggle = document.getElementById('password-toggle');
+
+    passwordToggle.addEventListener('click', () => {
+        const isPassword = passwordInput.type === 'password';
+
+        passwordInput.type = isPassword ? 'text' : 'password';
+        passwordToggle.textContent = isPassword ? 'Hide' : 'Show';
+        passwordToggle.setAttribute(
+            'aria-label',
+            isPassword ? 'Hide password' : 'Show password'
+        );
+    });
+</script>
+
+{% endblock %}

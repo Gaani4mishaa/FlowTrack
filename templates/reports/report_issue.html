@@ -1,0 +1,349 @@
+{% extends 'core/base.html' %}
+
+{% block title %}{% if is_edit %}Edit report{% else %}Report an issue{% endif %} | FlowTrack{% endblock %}
+
+{% block content %}
+
+<section class="report-page">
+
+    <div class="report-container">
+
+        <div class="report-header">
+            <span class="eyebrow">FlowTrack reporting</span>
+
+            <h1>{% if is_edit %}Edit your report{% else %}Report a drainage problem{% endif %}</h1>
+
+            <p>
+                {% if is_edit %}Update the details while your report is still awaiting review.{% else %}Provide the location, type of problem and useful evidence so the responsible organization can review it.{% endif %}
+            </p>
+        </div>
+
+
+        <div class="report-layout">
+
+            <form class="report-card" id="report-form" method="post" enctype="multipart/form-data">
+
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="form-errors" role="alert">{{ form.non_field_errors }}</div>
+                {% endif %}
+
+                <div class="form-section">
+                    <div class="form-section-heading">
+                        <span class="form-step">01</span>
+
+                        <div>
+                            <h2>What is the problem?</h2>
+                            <p>Select the issue that best describes what you observed.</p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="issue_type">Issue type</label>
+
+                        {{ form.issue_type }}
+                        {% for error in form.issue_type.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+                    </div>
+                </div>
+
+
+                <div class="form-section">
+                    <div class="form-section-heading">
+                        <span class="form-step">02</span>
+
+                        <div>
+                            <h2>Where is it?</h2>
+                            <p>
+                                A precise location helps the responsible team
+                                find the problem quickly.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="location-actions">
+
+                        <button
+                            type="button"
+                            class="location-button"
+                            id="use-location"
+                        >
+                            <span class="location-button-icon">⌖</span>
+                            <span>
+                                <strong>Use my current location</strong>
+                                <small>Allow FlowTrack to access your location</small>
+                            </span>
+                        </button>
+
+                    </div>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+                            <label for="county">County</label>
+
+                            {{ form.county }}
+                            {% for error in form.county.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+</div>
+
+<div class="form-group">
+                            <label for="area">Area / estate</label>
+
+                            {{ form.area }}
+                            {% for error in form.area.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+                        </div>
+
+                    </div>
+
+                    <div class="form-group">
+                        <label for="location_description">Location details</label>
+
+                        {{ form.location_description }}
+                        {% for error in form.location_description.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+                    </div>
+
+                    {{ form.latitude }}
+                    {{ form.longitude }}
+                    {% for error in form.latitude.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+                    {% for error in form.longitude.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+
+                    <div class="location-status" id="location-status">
+                        Location not captured yet.
+                    </div>
+                </div>
+
+
+                <div class="form-section">
+                    <div class="form-section-heading">
+                        <span class="form-step">03</span>
+
+                        <div>
+                            <h2>Add evidence</h2>
+                            <p>
+                                A clear photo can help the responsible team
+                                understand the issue before visiting.
+                            </p>
+                        </div>
+                    </div>
+
+                    <label for="photo" class="upload-area">
+
+                        <span class="upload-icon">+</span>
+
+                        <strong>Upload a photo</strong>
+
+                        <span>
+                            JPG, PNG or WEBP · Maximum 5 MB
+                        </span>
+
+                        {{ form.photo }}
+
+                    </label>
+
+                    {% for error in form.photo.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+                    {% if is_edit and report.photo %}<p class="current-photo">Current photo: <a href="{{ report.photo.url }}" target="_blank" rel="noopener">View uploaded evidence</a></p>{% endif %}
+                    <div id="photo-preview" class="photo-preview"></div>
+                </div>
+
+
+                <div class="form-section">
+                    <div class="form-section-heading">
+                        <span class="form-step">04</span>
+
+                        <div>
+                            <h2>Tell us more</h2>
+                            <p>
+                                Describe what you observed and anything else
+                                that could help with the response.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">
+                            Description <span class="optional-text">Optional</span>
+                        </label>
+
+                        {{ form.description }}
+                        {% for error in form.description.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+
+                        <div class="character-count">
+                            <span id="character-count">{{ form.description.value|default_if_none:""|length }}</span>/1000
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="report-footer">
+
+                    <div class="privacy-note">
+                        Your report will be shared with the organization
+                        responsible for managing the reported area.
+                    </div>
+
+                    {% if is_edit %}<a href="{% url 'report_detail' report.id %}" class="btn btn-secondary">Cancel</a>{% endif %}
+                    <button type="submit" class="btn btn-primary report-submit">{% if is_edit %}Save changes{% else %}Submit report{% endif %}</button>
+
+                </div>
+
+            </form>
+
+
+            <aside class="report-side-panel">
+
+                <div class="side-panel-card">
+                    <span class="eyebrow">What happens next?</span>
+
+                    <h2>Your report starts a response process.</h2>
+
+                    <div class="response-step">
+                        <span>01</span>
+                        <div>
+                            <strong>Review</strong>
+                            <p>
+                                The report is checked and assigned an initial priority.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="response-step">
+                        <span>02</span>
+                        <div>
+                            <strong>Action</strong>
+                            <p>
+                                The responsible organization can assign maintenance work.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="response-step">
+                        <span>03</span>
+                        <div>
+                            <strong>Update</strong>
+                            <p>
+                                You can follow the status as the issue moves toward resolution.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </aside>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<script>
+    const reportForm = document.getElementById('report-form');
+    const photoInput = document.getElementById('photo');
+    const photoPreview = document.getElementById('photo-preview');
+    const description = document.getElementById('description');
+    const characterCount = document.getElementById('character-count');
+    const useLocationButton = document.getElementById('use-location');
+    const locationStatus = document.getElementById('location-status');
+    const latitudeInput = document.getElementById('latitude');
+    const longitudeInput = document.getElementById('longitude');
+
+    /* Client-side checks improve feedback; server-side validation remains authoritative. */
+    photoInput.addEventListener('change', () => {
+        photoPreview.innerHTML = '';
+
+        const file = photoInput.files[0];
+
+        if (!file) {
+            return;
+        }
+
+        /* Validate file size */
+        const maxFileSize = 5 * 1024 * 1024;
+
+        if (file.size > maxFileSize) {
+            locationStatus.textContent = 'The photo is too large. Choose an image smaller than 5 MB.';
+            photoInput.value = '';
+            return;
+        }
+
+        /* Validate file type */
+        const allowedTypes = [
+            'image/jpeg',
+            'image/png',
+            'image/webp'
+        ];
+
+        if (!allowedTypes.includes(file.type)) {
+            locationStatus.textContent = 'Choose a JPG, PNG or WEBP image.';
+            photoInput.value = '';
+            return;
+        }
+
+        const previewWrapper = document.createElement('div');
+        previewWrapper.className = 'photo-preview-item';
+
+        const image = document.createElement('img');
+        image.src = URL.createObjectURL(file);
+        image.alt = 'Selected report photo preview';
+
+        const removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.className = 'remove-photo';
+        removeButton.textContent = 'Remove photo';
+
+        removeButton.addEventListener('click', () => {
+            photoInput.value = '';
+            photoPreview.innerHTML = '';
+            URL.revokeObjectURL(image.src);
+        });
+
+        previewWrapper.appendChild(image);
+        previewWrapper.appendChild(removeButton);
+        photoPreview.appendChild(previewWrapper);
+    });
+
+
+    /* Description character counter */
+    description.addEventListener('input', () => {
+        characterCount.textContent = description.value.length;
+    });
+    characterCount.textContent = description.value.length;
+
+
+    /* Current location */
+    useLocationButton.addEventListener('click', () => {
+        if (!navigator.geolocation) {
+            locationStatus.textContent =
+                'Location services are not supported by this browser.';
+            return;
+        }
+
+        useLocationButton.disabled = true;
+        locationStatus.textContent = 'Getting your location...';
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                latitudeInput.value = position.coords.latitude;
+                longitudeInput.value = position.coords.longitude;
+
+                locationStatus.textContent =
+                    'Location captured successfully.';
+
+                useLocationButton.disabled = false;
+            },
+            () => {
+                locationStatus.textContent =
+                    'We could not access your location. You can continue by entering the location manually.';
+
+                useLocationButton.disabled = false;
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 60000
+            }
+        );
+    });
+</script>
+
+{% endblock %}
