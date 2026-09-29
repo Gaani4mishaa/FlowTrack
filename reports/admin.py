@@ -7,6 +7,7 @@ class ReportAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "reporter",
+        "organization",
         "issue_type",
         "county",
         "area",
@@ -18,6 +19,7 @@ class ReportAdmin(admin.ModelAdmin):
     list_filter = (
         "issue_type",
         "county",
+        "organization",
         "status",
         "priority",
     )
@@ -28,6 +30,7 @@ class ReportAdmin(admin.ModelAdmin):
         "description",
         "reporter__username",
         "reporter__email",
+        "organization__name",
     )
 
     readonly_fields = (

@@ -72,3 +72,9 @@ class ReportForm(forms.ModelForm):
                         photo.seek(0)
 
         return cleaned_data
+
+
+class OrganizationTriageForm(forms.ModelForm):
+    class Meta:
+        model = Report
+        fields = ("priority",)

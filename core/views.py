@@ -25,6 +25,8 @@ def login_page(request):
 
         if user is not None:
             login(request, user)
+            if user.role == "manager":
+                return redirect("organization_report_queue")
             return redirect('resident_dashboard')
 
         messages.error(

@@ -1,0 +1,87 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Organization reports | FlowTrack{% endblock %}
+
+{% block content %}
+<section class="operations-page">
+    <div class="operations-container">
+        <header class="operations-header">
+            <div>
+                <span class="eyebrow">Organization operations</span>
+                <h1>Report review</h1>
+                <p>{{ organization.name }} · {{ organization.county }}</p>
+            </div>
+        </header>
+
+        <section class="operations-summary" aria-label="Report queue summary">
+            <div>
+                <span>Awaiting review</span>
+                <strong>{{ submitted_count }}</strong>
+            </div>
+            <div>
+                <span>Under review</span>
+                <strong>{{ under_review_count }}</strong>
+            </div>
+        </section>
+
+        <div class="operations-section-heading">
+            <h2>Assigned reports</h2>
+            <span>{{ reports|length }} total</span>
+        </div>
+
+        {% if reports %}
+            <div class="operations-report-list">
+                {% for report in reports %}
+                    <article class="operations-report">
+                        <div class="operations-report-heading">
+                            <div>
+                                <span class="operations-report-id">Report #{{ report.id }}</span>
+                                <h3>{{ report.get_issue_type_display }}</h3>
+                                <p>{{ report.area }}, {{ report.county }}</p>
+                            </div>
+                            <span class="report-status status-{{ report.status }}">{{ report.get_status_display }}</span>
+                        </div>
+
+                        <div class="operations-report-meta">
+                            <span>Submitted by {{ report.reporter.get_full_name|default:report.reporter.username }}</span>
+                            <span>{{ report.created_at|date:"d M Y, H:i" }}</span>
+                        </div>
+
+                        {% if report.description %}
+                            <p class="operations-report-description">{{ report.description|truncatewords:35 }}</p>
+                        {% endif %}
+
+                        <div class="operations-report-evidence">
+                            {% if report.location_description %}<span>{{ report.location_description }}</span>{% endif %}
+                            {% if report.photo %}<a href="{{ report.photo.url }}" target="_blank" rel="noopener">View photo evidence</a>{% endif %}
+                        </div>
+
+                        {% if report.status == 'submitted' or report.status == 'under_review' %}
+                            <form method="post" action="{% url 'organization_report_queue' %}" class="operations-triage-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="report_id" value="{{ report.id }}">
+                                <label for="priority-{{ report.id }}">Priority</label>
+                                <select name="priority" id="priority-{{ report.id }}" required>
+                                    {% for value, label in priority_choices %}
+                                        <option value="{{ value }}" {% if report.priority == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button class="btn btn-primary" type="submit">
+                                    {% if report.status == 'submitted' %}Start review{% else %}Save priority{% endif %}
+                                </button>
+                            </form>
+                        {% else %}
+                            <p class="operations-locked-note">Triage is closed for this report at its current stage.</p>
+                        {% endif %}
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="operations-empty-state">
+                <h2>No reports assigned</h2>
+                <p>Reports will appear here after a system administrator assigns them to {{ organization.name }}.</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

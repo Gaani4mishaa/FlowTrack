@@ -20,7 +20,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path
 from core.views import home, login_page, register_page, resident_dashboard
-from reports.views import delete_report, edit_report, report_issue, my_reports, report_detail
+from reports.views import delete_report, edit_report, organization_report_queue, report_issue, my_reports, report_detail
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', home, name='home'),
@@ -33,6 +33,7 @@ urlpatterns = [
     path('reports/<int:report_id>/edit/', edit_report, name='edit_report'),
     path('reports/<int:report_id>/delete/', delete_report, name='delete_report'),
     path('reports/<int:report_id>/', report_detail, name='report_detail'),
+    path('operations/reports/', organization_report_queue, name='organization_report_queue'),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -3,6 +3,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 
+from accounts.models import Organization
 from .models import Report
 
 
@@ -139,3 +140,178 @@ class ResidentReportWorkflowTests(TestCase):
 		response = self.client.post(reverse("delete_report", args=[report.id]))
 		self.assertRedirects(response, reverse("my_reports"))
 		self.assertFalse(Report.objects.filter(id=report.id).exists())
+
+
+class OrganizationReportQueueTests(TestCase):
+	@classmethod
+	def setUpTestData(cls):
+		user_model = get_user_model()
+		cls.organization = Organization.objects.create(
+			name="North District Works",
+			organization_type="county",
+			county="Nairobi City",
+		)
+		cls.other_organization = Organization.objects.create(
+			name="West District Works",
+			organization_type="county",
+			county="Nairobi City",
+		)
+		cls.manager = user_model.objects.create_user(
+			username="manager@example.com",
+			email="manager@example.com",
+			password="FlowTrack-test-123!",
+			role="manager",
+			organization=cls.organization,
+		)
+		cls.other_manager = user_model.objects.create_user(
+			username="other-manager@example.com",
+			email="other-manager@example.com",
+			password="FlowTrack-test-123!",
+			role="manager",
+			organization=cls.other_organization,
+		)
+		cls.resident = user_model.objects.create_user(
+			username="queue-resident@example.com",
+			email="queue-resident@example.com",
+			password="FlowTrack-test-123!",
+			role="resident",
+		)
+
+	def setUp(self):
+		self.client.force_login(self.manager)
+
+	def create_report(self, organization, area):
+		return Report.objects.create(
+			reporter=self.resident,
+			organization=organization,
+			issue_type="blocked_drain",
+			county="Nairobi City",
+			area=area,
+		)
+
+	def test_manager_queue_contains_only_reports_assigned_to_their_organization(self):
+		own_report = self.create_report(self.organization, "South B")
+		other_report = self.create_report(self.other_organization, "Westlands")
+		unassigned_report = self.create_report(None, "Kilimani")
+
+		response = self.client.get(reverse("organization_report_queue"))
+
+		self.assertEqual(response.status_code, 200)
+		self.assertContains(response, f"Report #{own_report.id}")
+		self.assertNotContains(response, f"Report #{other_report.id}")
+		self.assertNotContains(response, f"Report #{unassigned_report.id}")
+
+	def test_manager_can_set_priority_and_start_review(self):
+		report = self.create_report(self.organization, "South B")
+
+		response = self.client.post(
+			reverse("organization_report_queue"),
+			{"report_id": report.id, "priority": "high"},
+		)
+
+		self.assertRedirects(response, reverse("organization_report_queue"))
+		report.refresh_from_db()
+		self.assertEqual(report.priority, "high")
+		self.assertEqual(report.status, "under_review")
+
+	def test_manager_can_update_priority_without_reverting_review_status(self):
+		report = self.create_report(self.organization, "South B")
+		report.status = "under_review"
+		report.save(update_fields=("status",))
+
+		self.client.post(
+			reverse("organization_report_queue"),
+			{"report_id": report.id, "priority": "critical"},
+		)
+
+		report.refresh_from_db()
+		self.assertEqual(report.priority, "critical")
+		self.assertEqual(report.status, "under_review")
+
+	def test_manager_cannot_update_another_organizations_report(self):
+		report = self.create_report(self.other_organization, "Westlands")
+
+		response = self.client.post(
+			reverse("organization_report_queue"),
+			{"report_id": report.id, "priority": "critical"},
+		)
+
+		self.assertEqual(response.status_code, 404)
+		report.refresh_from_db()
+		self.assertEqual(report.priority, "medium")
+		self.assertEqual(report.status, "submitted")
+
+	def test_invalid_priority_does_not_change_report(self):
+		report = self.create_report(self.organization, "South B")
+
+		response = self.client.post(
+			reverse("organization_report_queue"),
+			{"report_id": report.id, "priority": "urgent"},
+		)
+
+		self.assertRedirects(response, reverse("organization_report_queue"))
+		report.refresh_from_db()
+		self.assertEqual(report.priority, "medium")
+		self.assertEqual(report.status, "submitted")
+
+	def test_closed_maintenance_stages_cannot_be_retriaged(self):
+		for status in ("assigned", "in_progress", "resolved", "closed"):
+			with self.subTest(status=status):
+				report = self.create_report(self.organization, f"Area {status}")
+				report.status = status
+				report.save(update_fields=("status",))
+
+				response = self.client.post(
+					reverse("organization_report_queue"),
+					{"report_id": report.id, "priority": "critical"},
+				)
+
+				self.assertRedirects(response, reverse("organization_report_queue"))
+				report.refresh_from_db()
+				self.assertEqual(report.priority, "medium")
+				self.assertEqual(report.status, status)
+
+	def test_malformed_report_id_is_handled_without_server_error(self):
+		response = self.client.post(
+			reverse("organization_report_queue"),
+			{"report_id": "not-a-number", "priority": "high"},
+		)
+
+		self.assertRedirects(response, reverse("organization_report_queue"))
+
+	def test_non_manager_is_forbidden(self):
+		self.client.force_login(self.resident)
+
+		response = self.client.get(reverse("organization_report_queue"))
+
+		self.assertEqual(response.status_code, 403)
+		self.assertNotContains(
+			response,
+			"Ask a FlowTrack administrator",
+			status_code=403,
+		)
+
+	def test_manager_without_organization_is_forbidden(self):
+		user_model = get_user_model()
+		manager = user_model.objects.create_user(
+			username="unassigned-manager@example.com",
+			email="unassigned-manager@example.com",
+			password="FlowTrack-test-123!",
+			role="manager",
+		)
+		self.client.force_login(manager)
+
+		response = self.client.get(reverse("organization_report_queue"))
+
+		self.assertEqual(response.status_code, 403)
+		self.assertContains(response, "Ask a FlowTrack administrator", status_code=403)
+
+	def test_manager_of_inactive_organization_is_forbidden(self):
+		self.other_organization.is_active = False
+		self.other_organization.save(update_fields=("is_active",))
+		self.client.force_login(self.other_manager)
+
+		response = self.client.get(reverse("organization_report_queue"))
+
+		self.assertEqual(response.status_code, 403)
+		self.assertContains(response, "Ask a FlowTrack administrator", status_code=403)
