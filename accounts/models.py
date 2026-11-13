@@ -1,5 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models import Q
+from django.db.models.functions import Lower
 
 
 class Organization(models.Model):
@@ -53,6 +55,17 @@ class User(AbstractUser):
     )
 
     phone_number = models.CharField(max_length=20, blank=True)
+
+    class Meta:
+        verbose_name = "user"
+        verbose_name_plural = "users"
+        constraints = [
+            models.UniqueConstraint(
+                Lower("email"),
+                condition=~Q(email=""),
+                name="accounts_user_email_ci_uniq",
+            ),
+        ]
 
     def __str__(self):
         return self.get_full_name() or self.username

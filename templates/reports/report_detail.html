@@ -80,6 +80,17 @@ Report #{{ report.id }} | FlowTrack
                             </strong>
                         </div>
 
+                        <div class="detail-item">
+                            <span>Assigned organization</span>
+                            <strong>
+                                {% if report.organization %}
+                                    {{ report.organization.name }}
+                                {% else %}
+                                    Not assigned
+                                {% endif %}
+                            </strong>
+                        </div>
+
                     </div>
 
                 </section>
@@ -99,7 +110,7 @@ Report #{{ report.id }} | FlowTrack
                         </p>
                     {% endif %}
 
-                    {% if report.latitude and report.longitude %}
+                    {% if report.latitude != None and report.longitude != None %}
                         <div class="coordinates">
                             <span>Coordinates</span>
                             <strong>
@@ -127,6 +138,40 @@ Report #{{ report.id }} | FlowTrack
                     {% endif %}
 
                 </section>
+
+
+                {% if work_order %}
+                    <section class="detail-section">
+                        <h2>Maintenance progress</h2>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <span>Work order status</span>
+                                <strong>{{ work_order.get_status_display }}</strong>
+                            </div>
+                            <div class="detail-item">
+                                <span>Assigned</span>
+                                <strong>{{ work_order.assigned_at|date:"d M Y, H:i" }}</strong>
+                            </div>
+                            {% if work_order.started_at %}
+                                <div class="detail-item">
+                                    <span>Work started</span>
+                                    <strong>{{ work_order.started_at|date:"d M Y, H:i" }}</strong>
+                                </div>
+                            {% endif %}
+                            {% if work_order.resolved_at %}
+                                <div class="detail-item">
+                                    <span>Resolution recorded</span>
+                                    <strong>{{ work_order.resolved_at|date:"d M Y, H:i" }}</strong>
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% if work_order.resolution_notes %}
+                            <p class="detail-text">{{ work_order.resolution_notes }}</p>
+                        {% else %}
+                            <p class="detail-muted">No maintenance notes have been recorded.</p>
+                        {% endif %}
+                    </section>
+                {% endif %}
 
 
                 {% if report.photo %}
@@ -160,54 +205,24 @@ Report #{{ report.id }} | FlowTrack
                     </h2>
 
                     <p>
-                        Your report has been submitted and is currently
-                        in the FlowTrack response process.
+                        This is the current status recorded for your report.
                     </p>
 
                 </div>
 
-
-<div class="timeline-step {% if report.status == 'submitted' %}timeline-active{% endif %}">
-    <span>01</span>
-<div>
-<strong>Report submitted</strong>
-<p>
-Your drainage issue has been recorded.
- </p>
-</div>
-</div>
-
-<div class="timeline-step {% if report.status == 'under_review' %}timeline-active{% endif %}">
-    <span>02</span>
- <div>
-<strong>Review and prioritization</strong>
-<p>
-The responsible organization reviews the issue.
-</p>
-</div>
-</div>
-
-<div class="timeline-step {% if report.status == 'assigned' or report.status == 'in_progress' %}timeline-active{% endif %}">
-    <span>03</span>
-
-    <div>
-        <strong>Maintenance action</strong>
-        <p>
-            The issue can be assigned to a maintenance team.
-        </p>
-    </div>
-</div>
-
- <div class="timeline-step {% if report.status == 'resolved' or report.status == 'closed' %}timeline-active{% endif %}">
-<span>04</span>
-
-    <div>
-  <strong>Resolution</strong>
-  <p>
- The report is updated when the issue has been resolved.
-        </p>
-    </div>
-</div>
+                <div class="timeline-card">
+                    <h2>Report status stages</h2>
+                    <p class="status-history-note">FlowTrack displays the current status; earlier status changes are not retained as a timeline.</p>
+                    {% for stage in status_stages %}
+                        <div class="timeline-step {% if stage.current %}timeline-active{% endif %}">
+                            <span>{{ forloop.counter|stringformat:"02d" }}</span>
+                            <div>
+                                <strong>{{ stage.label }}</strong>
+                                {% if stage.current %}<p>Current status recorded for this report.</p>{% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
 
                 </div>
 

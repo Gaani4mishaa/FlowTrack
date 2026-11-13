@@ -41,6 +41,14 @@ My Dashboard | FlowTrack
             </article>
 
             <article class="dashboard-stat-card">
+                <span class="stat-label">Awaiting review</span>
+                <strong>{{ awaiting_review_reports }}</strong>
+                <span class="stat-description">
+                    Submitted or under review
+                </span>
+            </article>
+
+            <article class="dashboard-stat-card">
                 <span class="stat-label">In progress</span>
                <strong>{{ in_progress_reports }}</strong>
                 <span class="stat-description">
@@ -81,7 +89,7 @@ My Dashboard | FlowTrack
 
         {% for report in recent_reports %}
 
-            <article class="recent-report-card">
+            <a href="{% url 'report_detail' report.id %}" class="recent-report-card">
 
                 <div class="recent-report-main">
 
@@ -107,7 +115,7 @@ My Dashboard | FlowTrack
 
                 </div>
 
-            </article>
+            </a>
 
         {% endfor %}
 

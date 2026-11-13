@@ -1,0 +1,120 @@
+{% extends 'core/base.html' %}
+
+{% block title %}My work orders | FlowTrack{% endblock %}
+
+{% block content %}
+<section class="operations-page">
+    <div class="operations-container role-dashboard">
+        <header class="operations-header">
+            <div>
+                <span class="eyebrow">Maintenance workspace</span>
+                <h1>Welcome back, {{ request.user.first_name|default:request.user.username }}</h1>
+                <p>{{ organization.name }} · Your assigned drainage maintenance work.</p>
+            </div>
+            <a class="btn btn-primary" href="#assigned-work">View assigned work</a>
+        </header>
+
+        <section class="role-stat-grid" aria-label="Your work order summary">
+            <article class="role-stat-card"><span class="role-stat-icon" aria-hidden="true">01</span><div><span>Assigned work orders</span><strong>{{ total_count }}</strong></div></article>
+            <article class="role-stat-card"><span class="role-stat-icon role-stat-warning" aria-hidden="true">02</span><div><span>Pending tasks</span><strong>{{ assigned_count }}</strong></div></article>
+            <article class="role-stat-card"><span class="role-stat-icon role-stat-active" aria-hidden="true">03</span><div><span>Work in progress</span><strong>{{ in_progress_count }}</strong></div></article>
+            <article class="role-stat-card"><span class="role-stat-icon role-stat-complete" aria-hidden="true">04</span><div><span>Completed work</span><strong>{{ resolved_count }}</strong></div></article>
+        </section>
+
+        <section class="role-panel" id="assigned-work">
+            <div class="role-panel-heading">
+                <div><h2>My work orders</h2><p>Open a work order to review its details and update progress.</p></div>
+                <span>{{ page_obj.paginator.count }} matching</span>
+            </div>
+
+            <form method="get" class="role-filter-form" role="search">
+                <div>
+                    <label for="engineer-work-search">Search work orders</label>
+                    <input type="search" id="engineer-work-search" name="search" value="{{ search }}" placeholder="Report ID, issue or location">
+                </div>
+                <div>
+                    <label for="engineer-work-status">Status</label>
+                    <select id="engineer-work-status" name="status">
+                        <option value="">All statuses</option>
+                        {% for value, label in status_choices %}<option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="role-filter-actions">
+                    <button class="btn btn-primary" type="submit">Apply filters</button>
+                    {% if search or selected_status %}<a class="btn btn-secondary" href="{% url 'engineer_work_orders' %}">Clear</a>{% endif %}
+                </div>
+            </form>
+
+        {% if work_orders %}
+            <div class="operations-report-list">
+                {% for work_order in work_orders %}
+                    <article class="operations-report work-order-card">
+                        <div class="operations-report-heading">
+                            <div>
+                                <span class="operations-report-id">Work order · Report #{{ work_order.report_id }}</span>
+                                <h3>{{ work_order.report.get_issue_type_display }}</h3>
+                                <p>{{ work_order.report.area }}, {{ work_order.report.county }}</p>
+                            </div>
+                            <span class="report-status status-{{ work_order.status }}">{{ work_order.get_status_display }}</span>
+                            <span class="priority-badge priority-{{ work_order.report.priority }}">{{ work_order.report.get_priority_display }}</span>
+                        </div>
+
+                        <p class="operations-report-detail-link">
+                            <a href="{% url 'engineer_work_order_detail' work_order.id %}">View work order details</a>
+                        </p>
+
+                        <div class="operations-report-meta">
+                            <span>Assigned by {{ work_order.assigned_by.get_full_name|default:work_order.assigned_by.username }}</span>
+                            <span>{{ work_order.assigned_at|date:"d M Y, H:i" }}</span>
+                        </div>
+
+                        {% if work_order.report.location_description %}
+                            <p class="operations-report-description">{{ work_order.report.location_description }}</p>
+                        {% endif %}
+                        {% if work_order.report.description %}
+                            <p class="operations-report-description">{{ work_order.report.description }}</p>
+                        {% endif %}
+
+                        <div class="operations-report-evidence">
+                            {% if work_order.report.latitude != None and work_order.report.longitude != None %}
+                                <a href="https://www.google.com/maps?q={{ work_order.report.latitude }},{{ work_order.report.longitude }}" target="_blank" rel="noopener">Open reported location</a>
+                            {% endif %}
+                            {% if work_order.report.photo %}
+                                <a href="{{ work_order.report.photo.url }}" target="_blank" rel="noopener">View report photo</a>
+                            {% endif %}
+                        </div>
+
+                        {% if work_order.status == 'assigned' or work_order.status == 'in_progress' %}
+                            <div class="work-order-list-action">
+                                <p class="work-order-next-step">
+                                    {% if work_order.status == 'assigned' %}Next step: start work and record progress when ready.{% else %}Add a resolution note before marking this work order complete.{% endif %}
+                                </p>
+                                <a class="btn btn-primary" href="{% url 'engineer_work_order_detail' work_order.id %}">Open work order</a>
+                            </div>
+                        {% else %}
+                            <div class="work-order-resolution">
+                                <strong>Resolution summary</strong>
+                                <p>{{ work_order.resolution_notes }}</p>
+                                {% if work_order.resolved_at %}<span>Resolved {{ work_order.resolved_at|date:"d M Y, H:i" }}</span>{% endif %}
+                            </div>
+                        {% endif %}
+                    </article>
+                {% endfor %}
+            </div>
+            {% if page_obj.has_other_pages %}
+                <nav class="role-pagination" aria-label="Work order pages">
+                    {% if page_obj.has_previous %}<a href="?{% if filter_query %}{{ filter_query }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+                    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                    {% if page_obj.has_next %}<a href="?{% if filter_query %}{{ filter_query }}&amp;{% endif %}page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="operations-empty-state">
+                <h2>{% if search or selected_status %}No matching work orders{% else %}No work orders assigned{% endif %}</h2>
+                <p>{% if search or selected_status %}Adjust your search or clear the filters. Completed work can be found by selecting the Resolved status.{% else %}Work orders assigned to your account will appear here. Your completed work will remain available using the status filter.{% endif %}</p>
+            </div>
+        {% endif %}
+        </section>
+    </div>
+</section>
+{% endblock %}

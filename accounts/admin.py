@@ -44,3 +44,8 @@ class UserAdmin(admin.ModelAdmin):
         "first_name",
         "last_name",
     )
+    actions = None
+    exclude = ("password",)
+
+    def has_delete_permission(self, request, obj=None):
+        return False

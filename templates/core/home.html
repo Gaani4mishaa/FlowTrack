@@ -1,72 +1,215 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block title %}
-FlowTrack | Smarter Drainage Management
-{% endblock %}
+{% block title %}FlowTrack | Drainage Reporting and Tracking{% endblock %}
 
 {% block content %}
+<div class="home-page">
+    <section class="home-hero" aria-labelledby="home-title">
+        <div class="container home-hero-layout">
+            <div class="home-hero-copy">
+                <span class="home-eyebrow"><span aria-hidden="true"></span> Community drainage reporting</span>
+                <h1 id="home-title">Report drainage issues. Track every update.</h1>
+                <p>
+                    Report a drainage problem with its location. Sign in later to see the status updates recorded for your report.
+                </p>
+                <div class="home-actions">
+                    {% if not user.is_authenticated %}
+                        <a href="{% url 'register' %}" class="btn btn-primary">Report a Drainage Issue</a>
+                        <a href="{% url 'login' %}" class="btn btn-secondary">Sign In</a>
+                    {% elif user.role == 'resident' %}
+                        <a href="{% url 'report_issue' %}" class="btn btn-primary">Report a Drainage Issue</a>
+                        <a href="{% url 'my_reports' %}" class="btn btn-secondary">View My Reports</a>
+                    {% elif user.role == 'manager' and user.organization and user.organization.is_active %}
+                        <a href="{% url 'organization_report_queue' %}" class="btn btn-primary">Review Organization Reports</a>
+                        <a href="#how-it-works" class="btn btn-secondary">How It Works</a>
+                    {% elif user.role == 'engineer' and user.organization and user.organization.is_active %}
+                        <a href="{% url 'engineer_work_orders' %}" class="btn btn-primary">View My Work Orders</a>
+                        <a href="#how-it-works" class="btn btn-secondary">How It Works</a>
+                    {% elif user.is_staff %}
+                        <a href="{% url 'admin:index' %}" class="btn btn-primary">Open Administration</a>
+                        <a href="#how-it-works" class="btn btn-secondary">How It Works</a>
+                    {% else %}
+                        <a href="#how-it-works" class="btn btn-primary">How FlowTrack Works</a>
+                    {% endif %}
+                </div>
+                <div class="home-trust-note">
+                    <span class="home-trust-mark" aria-hidden="true"></span>
+                    <span>One place for drainage reports and their recorded updates</span>
+                </div>
+            </div>
 
-<section class="hero">
-    <img class="hero-image" src="{% static 'images/urban-flooding.jpg' %}" alt="Floodwater covering an urban road and submerging vehicles" fetchpriority="high">
-    <div class="hero-shade" aria-hidden="true"></div>
-    <span class="hero-image-credit">Illustrative flood photograph</span>
-    <div class="container hero-inner">
-        <div class="hero-content">
-            <span class="eyebrow">Community drainage reporting</span>
-            <h1>FlowTrack</h1>
-            <h2>See a drainage problem? Put it on the record.</h2>
-            <p>Share the location, a photo and what you observed. Keep a clear record of your report and follow its status.</p>
-            <div class="hero-actions">
-                {% if user.is_authenticated %}
-                    <a href="{% url 'report_issue' %}" class="btn btn-primary">Report a drainage problem</a>
-                    <a href="{% url 'my_reports' %}" class="btn btn-light">View my reports</a>
-                {% else %}
-                    <a href="{% url 'register' %}" class="btn btn-primary">Create an account</a>
-                    <a href="{% url 'login' %}" class="btn btn-light">Sign in</a>
+            <figure class="home-hero-figure">
+                <img
+                    class="home-hero-image"
+                    src="{% static 'images/drainage-channel.jpg' %}"
+                    alt="Urban drainage channel carrying water through a built-up area"
+                    width="1200"
+                    height="900"
+                    fetchpriority="high"
+                >
+                <div class="home-image-status" aria-label="Example recorded report progress">
+                    <span class="home-image-status-icon" aria-hidden="true">STATUS</span>
+                    <span><strong>Report progress</strong><small>Recorded updates, in one view</small></span>
+                    <span class="home-live-dot" aria-hidden="true"></span>
+                </div>
+                <figcaption>
+                    <a href="https://commons.wikimedia.org/wiki/File:Concrete_lined_Drainage_channel.jpg" target="_blank" rel="noopener noreferrer">
+                        Photo: EST blueprint / Wikimedia Commons (CC BY-SA 4.0)
+                    </a>
+                </figcaption>
+            </figure>
+        </div>
+    </section>
+
+    <section class="home-section home-steps" id="how-it-works" aria-labelledby="steps-title">
+        <div class="container">
+            <div class="home-section-heading">
+                <span class="home-eyebrow">How it works</span>
+                <h2 id="steps-title">A report moves through a clear process</h2>
+                <p>From the first observation to the latest update, each step is recorded in FlowTrack.</p>
+            </div>
+            <ol class="home-step-grid">
+                <li class="home-step-card">
+                    <span class="home-step-number" aria-hidden="true">1</span>
+                    <h3>Report an issue</h3>
+                    <p>Describe the problem and location. Add a photo or coordinates if available.</p>
+                </li>
+                <li class="home-step-card">
+                    <span class="home-step-number" aria-hidden="true">2</span>
+                    <h3>Review and assign</h3>
+                    <p>The report is assigned to an organization for review and prioritization.</p>
+                </li>
+                <li class="home-step-card">
+                    <span class="home-step-number" aria-hidden="true">3</span>
+                    <h3>Maintenance work</h3>
+                    <p>A manager coordinates work by assigning an engineer to an eligible report.</p>
+                </li>
+                <li class="home-step-card">
+                    <span class="home-step-number" aria-hidden="true">4</span>
+                    <h3>Track progress</h3>
+                    <p>Residents can sign in to see the status updates recorded for their reports.</p>
+                </li>
+            </ol>
+        </div>
+    </section>
+
+    <section class="home-section home-issues" id="report-types" aria-labelledby="issues-title">
+        <div class="container">
+            <div class="home-section-heading home-section-heading-left">
+                <span class="home-eyebrow">What can be reported</span>
+                <h2 id="issues-title">Drainage problems we track</h2>
+                <p>Choose the issue type that best describes what you observe.</p>
+            </div>
+            <div class="home-issue-grid">
+                <article class="home-issue-card">
+                    <img src="{% static 'images/storm-drain-leaves.jpg' %}" alt="Leaves and debris collected along a concrete roadside curb" loading="lazy">
+                    <div><h3>Blocked drain</h3><p>Leaves or debris restrict water flow.</p></div>
+                </article>
+                <article class="home-issue-card">
+                    <img src="{% static 'images/urban-flooding.jpg' %}" alt="Urban street affected by floodwater" loading="lazy">
+                    <div><h3>Flooding</h3><p>Water collects on streets or nearby areas.</p></div>
+                </article>
+                <article class="home-issue-card">
+                    <img src="{% static 'images/drainage-channel.jpg' %}" alt="Concrete-lined drainage channel carrying water" loading="lazy">
+                    <div><h3>Damaged culvert</h3><p>A culvert or crossing is damaged.</p></div>
+                </article>
+                <article class="home-issue-card">
+                    <img src="{% static 'images/urban-flooding.jpg' %}" alt="Floodwater rising along an urban road" loading="lazy">
+                    <div><h3>Overflowing drain</h3><p>A drain cannot contain or carry the water.</p></div>
+                </article>
+                <article class="home-issue-card">
+                    <img src="{% static 'images/storm-drain-leaves.jpg' %}" alt="Leaves and debris along a roadside drainage channel" loading="lazy">
+                    <div><h3>Waste obstructing drainage</h3><p>Waste is blocking a drainage route.</p></div>
+                </article>
+                <article class="home-issue-card">
+                    <img src="{% static 'images/drainage-channel.jpg' %}" alt="Built drainage channel beside an urban area" loading="lazy">
+                    <div><h3>Damaged drainage channel</h3><p>A channel is broken or visibly deteriorated.</p></div>
+                </article>
+                <article class="home-issue-card">
+                    <img src="{% static 'images/drainage-channel.jpg' %}" alt="Urban water management channel" loading="lazy">
+                    <div><h3>Other drainage issue</h3><p>Report another drainage concern.</p></div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="home-section home-roles" id="roles" aria-labelledby="roles-title">
+        <div class="container">
+            <div class="home-section-heading">
+                <span class="home-eyebrow">One shared record</span>
+                <h2 id="roles-title">Built around the people in the process</h2>
+            </div>
+            <div class="home-role-grid">
+                <article class="home-role-card">
+                    <span class="home-role-mark" aria-hidden="true">01</span>
+                    <h3>Residents</h3>
+                    <p>Submit drainage reports and follow their recorded status.</p>
+                </article>
+                <article class="home-role-card">
+                    <span class="home-role-mark" aria-hidden="true">02</span>
+                    <h3>Organization Managers</h3>
+                    <p>Review assigned reports and coordinate maintenance work.</p>
+                </article>
+                <article class="home-role-card">
+                    <span class="home-role-mark" aria-hidden="true">03</span>
+                    <h3>Maintenance Engineers</h3>
+                    <p>View work orders and record progress and resolution details.</p>
+                </article>
+                <article class="home-role-card">
+                    <span class="home-role-mark" aria-hidden="true">04</span>
+                    <h3>System Administrators</h3>
+                    <p>Manage users, organizations, reports and application records.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="home-cta" aria-labelledby="cta-title">
+        <div class="container home-cta-content">
+            <div>
+                <span class="home-eyebrow">Make the issue visible</span>
+                <h2 id="cta-title">Start a drainage report with FlowTrack</h2>
+                <p>Keep your report details and recorded progress together.</p>
+            </div>
+            <div class="home-actions">
+                {% if not user.is_authenticated %}
+                    <a href="{% url 'register' %}" class="btn btn-primary">Create an Account</a>
+                    <a href="{% url 'login' %}" class="btn btn-secondary">Sign In</a>
+                {% elif user.role == 'resident' %}
+                    <a href="{% url 'report_issue' %}" class="btn btn-primary">Report an Issue</a>
+                    <a href="{% url 'my_reports' %}" class="btn btn-secondary">View My Reports</a>
+                {% elif user.role == 'manager' and user.organization and user.organization.is_active %}
+                    <a href="{% url 'organization_report_queue' %}" class="btn btn-primary">Review Reports</a>
+                {% elif user.role == 'engineer' and user.organization and user.organization.is_active %}
+                    <a href="{% url 'engineer_work_orders' %}" class="btn btn-primary">View Work Orders</a>
+                {% elif user.is_staff %}
+                    <a href="{% url 'admin:index' %}" class="btn btn-primary">Open Administration</a>
                 {% endif %}
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
-
-<section class="features">
-    <div class="container">
-        <div class="home-section-heading" id="how-it-works">
-            <span class="eyebrow">A clear reporting process</span>
-            <h2>From observation to a tracked report</h2>
+    <footer class="home-footer">
+        <div class="container home-footer-content">
+            <div>
+                <a class="home-footer-brand" href="{% url 'home' %}">FlowTrack</a>
+                <p>A web-based system for reporting drainage issues and tracking their recorded progress.</p>
+            </div>
+            <nav class="home-footer-links" aria-label="Footer navigation">
+                <a href="{% url 'home' %}">Home</a>
+                <a href="#how-it-works">How it works</a>
+                <a href="#report-types">Report types</a>
+                {% if user.is_authenticated %}
+                    {% if user.role == 'resident' %}
+                        <a href="{% url 'my_reports' %}">My reports</a>
+                    {% endif %}
+                {% else %}
+                    <a href="{% url 'login' %}">Sign in</a>
+                    <a href="{% url 'register' %}">Create account</a>
+                {% endif %}
+            </nav>
         </div>
-
-        <div class="feature-grid">
-
-            <article class="feature-card">
-                <span class="feature-index">01 / REPORT</span>
-                <h3>Describe the issue</h3>
-                <p>
-                    Choose a drainage issue and add its area, location details and optional photo evidence.
-                </p>
-            </article>
-
-            <article class="feature-card">
-                <span class="feature-index">02 / REVIEW</span>
-                <h3>Keep a record</h3>
-                <p>
-                    Your submission is stored with a timestamp and status for authorized review.
-                </p>
-            </article>
-
-            <article class="feature-card">
-                <span class="feature-index">03 / TRACK</span>
-                <h3>Follow progress</h3>
-                <p>
-                    Return to your report history to see the latest recorded status.
-                </p>
-            </article>
-
-        </div>
-
-    </div>
-</section>
-
+    </footer>
+</div>
 {% endblock %}

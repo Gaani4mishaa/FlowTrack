@@ -1,0 +1,44 @@
+{% extends "core/base.html" %}
+{% block title %}Work Orders | FlowTrack Admin{% endblock %}
+{% block content %}
+<div class="admin-dashboard">
+    {% include "core/admin_sidebar.html" with active_section="work-orders" %}
+    <div class="admin-main">
+        <header class="admin-page-heading">
+            <div>
+                <span class="admin-eyebrow">Maintenance operations</span>
+                <h1>Maintenance work orders</h1>
+                <p>Monitor engineer assignments and work-order progress.</p>
+            </div>
+        </header>
+        <section class="admin-panel">
+            <div class="admin-panel-heading">
+                <div><h2>All work orders</h2><p>{{ page_obj.paginator.count }} work orders</p></div>
+            </div>
+            {% if page_obj.object_list %}
+                <div class="admin-table-scroll">
+                    <table class="admin-table">
+                        <thead><tr><th>Drainage issue</th><th>Organization</th><th>Engineer</th><th>Status</th><th>Assigned</th><th>Updated</th><th></th></tr></thead>
+                        <tbody>
+                            {% for work_order in page_obj %}
+                                <tr>
+                                    <td class="admin-table-primary">{{ work_order.report.get_issue_type_display }} — {{ work_order.report.area }}</td>
+                                    <td>{{ work_order.report.organization.name|default:"Unassigned" }}</td>
+                                    <td>{{ work_order.engineer.get_full_name|default:"Unnamed account" }}</td>
+                                    <td><span class="admin-status">{{ work_order.get_status_display }}</span></td>
+                                    <td>{{ work_order.assigned_at|date:"d M Y" }}</td>
+                                    <td>{{ work_order.updated_at|date:"d M Y" }}</td>
+                                    <td><a class="admin-table-action" href="{% url 'admin_work_order_detail' work_order.id %}">Inspect</a></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="admin-empty">No maintenance work orders have been assigned yet.</p>
+            {% endif %}
+        </section>
+        {% include "core/admin_pagination.html" with page_obj=page_obj %}
+    </div>
+</div>
+{% endblock %}

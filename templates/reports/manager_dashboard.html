@@ -1,0 +1,95 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Manager Dashboard | FlowTrack{% endblock %}
+
+{% block content %}
+<section class="operations-page">
+    <div class="operations-container role-dashboard">
+        <header class="operations-header">
+            <div>
+                <span class="eyebrow">Organization workspace</span>
+                <h1>Welcome back, {{ request.user.first_name|default:request.user.username }}</h1>
+                <p>{{ organization.name }} · {{ organization.county }}</p>
+            </div>
+            <div class="role-dashboard-actions">
+                <a class="btn btn-primary" href="{% url 'organization_report_queue' %}">Review reports</a>
+                <a class="btn btn-secondary" href="{% url 'manager_work_orders' %}">View work orders</a>
+            </div>
+        </header>
+
+        <section class="role-stat-grid" aria-label="Organization report summary">
+            <article class="role-stat-card">
+                <span class="role-stat-icon" aria-hidden="true">01</span>
+                <div><span>Assigned reports</span><strong>{{ assigned_reports_count }}</strong></div>
+            </article>
+            <article class="role-stat-card">
+                <span class="role-stat-icon role-stat-warning" aria-hidden="true">02</span>
+                <div><span>Pending reviews</span><strong>{{ pending_reviews_count }}</strong></div>
+            </article>
+            <article class="role-stat-card">
+                <span class="role-stat-icon role-stat-active" aria-hidden="true">03</span>
+                <div><span>Active work orders</span><strong>{{ active_work_orders_count }}</strong></div>
+            </article>
+            <article class="role-stat-card">
+                <span class="role-stat-icon role-stat-complete" aria-hidden="true">04</span>
+                <div><span>Resolved work orders</span><strong>{{ resolved_work_orders_count }}</strong></div>
+            </article>
+        </section>
+
+        <section class="role-panel">
+            <div class="role-panel-heading">
+                <div><h2>Recent organization reports</h2><p>Latest drainage reports assigned to your organization.</p></div>
+                <a class="section-link" href="{% url 'organization_report_queue' %}">All reports</a>
+            </div>
+            {% if recent_reports %}
+                <div class="role-record-list">
+                    {% for report in recent_reports %}
+                        <a class="role-record" href="{% url 'manager_report_detail' report.id %}">
+                            <span class="role-record-mark" aria-hidden="true">#{{ report.id }}</span>
+                            <span class="role-record-main">
+                                <strong>{{ report.get_issue_type_display }}</strong>
+                                <small>{{ report.area }}, {{ report.county }} · {{ report.created_at|date:"d M Y" }}</small>
+                            </span>
+                            <span class="role-record-tags">
+                                <span class="report-status status-{{ report.status }}">{{ report.get_status_display }}</span>
+                                <span class="priority-badge priority-{{ report.priority }}">{{ report.get_priority_display }}</span>
+                            </span>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="operations-empty-state">
+                    <h3>No reports assigned yet</h3>
+                    <p>Reports will appear here after an administrator assigns them to your organization.</p>
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="role-panel">
+            <div class="role-panel-heading">
+                <div><h2>Recent maintenance work</h2><p>Monitor engineer assignments and recorded progress.</p></div>
+                <a class="section-link" href="{% url 'manager_work_orders' %}">All work orders</a>
+            </div>
+            {% if recent_work_orders %}
+                <div class="role-record-list">
+                    {% for work_order in recent_work_orders %}
+                        <a class="role-record" href="{% url 'manager_report_detail' work_order.report_id %}">
+                            <span class="role-record-mark" aria-hidden="true">WO{{ work_order.id }}</span>
+                            <span class="role-record-main">
+                                <strong>{{ work_order.report.get_issue_type_display }} · {{ work_order.report.area }}</strong>
+                                <small>{{ work_order.engineer.get_full_name|default:work_order.engineer.username }} · Assigned {{ work_order.assigned_at|date:"d M Y" }}</small>
+                            </span>
+                            <span class="report-status status-{{ work_order.status }}">{{ work_order.get_status_display }}</span>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="operations-empty-state">
+                    <h3>No work orders yet</h3>
+                    <p>When reports are assigned to engineers, their progress will be listed here.</p>
+                </div>
+            {% endif %}
+        </section>
+    </div>
+</section>
+{% endblock %}

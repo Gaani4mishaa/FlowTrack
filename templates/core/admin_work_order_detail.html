@@ -1,0 +1,40 @@
+{% extends "core/base.html" %}
+{% block title %}Work Order #{{ work_order.id }} | FlowTrack Admin{% endblock %}
+{% block content %}
+<div class="admin-dashboard">
+    {% include "core/admin_sidebar.html" with active_section="work-orders" %}
+    <div class="admin-main">
+        <header class="admin-page-heading">
+            <div>
+                <span class="admin-eyebrow">Maintenance work order · #{{ work_order.id }}</span>
+                <h1>{{ work_order.report.get_issue_type_display }}</h1>
+                <p>{{ work_order.report.area }}, {{ work_order.report.county }}</p>
+            </div>
+            <a class="admin-secondary-action" href="{% url 'admin_work_orders' %}">Back to work orders</a>
+        </header>
+        <div class="admin-detail-grid">
+            <section class="admin-panel">
+                <div class="admin-panel-heading"><h2>Assignment and progress</h2></div>
+                <dl class="admin-detail-list">
+                    <div><dt>Status</dt><dd><span class="admin-status">{{ work_order.get_status_display }}</span></dd></div>
+                    <div><dt>Engineer</dt><dd>{{ work_order.engineer.get_full_name|default:"Unnamed account" }}</dd></div>
+                    <div><dt>Assigned by</dt><dd>{{ work_order.assigned_by.get_full_name|default:"Unnamed account" }}</dd></div>
+                    <div><dt>Assigned on</dt><dd>{{ work_order.assigned_at|date:"d M Y, H:i" }}</dd></div>
+                    <div><dt>Started on</dt><dd>{{ work_order.started_at|date:"d M Y, H:i"|default:"Not started" }}</dd></div>
+                    <div><dt>Resolved on</dt><dd>{{ work_order.resolved_at|date:"d M Y, H:i"|default:"Not resolved" }}</dd></div>
+                    <div><dt>Resolution notes</dt><dd>{{ work_order.resolution_notes|default:"No resolution notes yet."|linebreaksbr }}</dd></div>
+                </dl>
+            </section>
+            <section class="admin-panel">
+                <div class="admin-panel-heading"><h2>Linked drainage report</h2></div>
+                <dl class="admin-detail-list">
+                    <div><dt>Report</dt><dd><a class="admin-text-link" href="{% url 'admin_report_detail' work_order.report.id %}">#{{ work_order.report.id }} · {{ work_order.report.get_issue_type_display }}</a></dd></div>
+                    <div><dt>Organization</dt><dd>{{ work_order.report.organization.name|default:"Unassigned" }}</dd></div>
+                    <div><dt>Report status</dt><dd><span class="admin-status">{{ work_order.report.get_status_display }}</span></dd></div>
+                    <div><dt>Reported by</dt><dd>{{ work_order.report.reporter.get_full_name|default:"Unnamed account" }}</dd></div>
+                </dl>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}

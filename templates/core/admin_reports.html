@@ -1,0 +1,138 @@
+{% extends "core/base.html" %}
+{% block title %}Drainage Reports | FlowTrack Admin{% endblock %}
+{% block content %}
+<div class="admin-dashboard">
+    {% include "core/admin_sidebar.html" with active_section="reports" %}
+    <div class="admin-main">
+        <header class="admin-page-heading">
+            <div>
+                <span class="admin-eyebrow">Drainage operations</span>
+                <h1>Drainage reports</h1>
+                <p>Inspect submitted issues and follow their current response status.</p>
+            </div>
+        </header>
+        <section class="admin-panel">
+            <div class="admin-panel-heading">
+                <div><h2>All reports</h2><p>{{ page_obj.paginator.count }} reports</p></div>
+            </div>
+            <form method="get" class="admin-user-filters admin-report-filters" role="search">
+                <div class="admin-user-search">
+                    <label for="report-search">Search reports</label>
+                    <input
+                        type="search"
+                        id="report-search"
+                        name="search"
+                        value="{{ search }}"
+                        placeholder="ID, issue, location or reporter"
+                    >
+                </div>
+                <div class="admin-user-filter">
+                    <label for="report-county">County</label>
+                    <select id="report-county" name="county">
+                        <option value="">All counties</option>
+                        {% for value, label in counties %}
+                            <option value="{{ value }}" {% if selected_county == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="admin-user-filter">
+                    <label for="report-issue-type">Issue type</label>
+                    <select id="report-issue-type" name="issue_type">
+                        <option value="">All issue types</option>
+                        {% for value, label in issue_types %}
+                            <option value="{{ value }}" {% if selected_issue_type == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="admin-user-filter">
+                    <label for="report-status">Status</label>
+                    <select id="report-status" name="status">
+                        <option value="">All statuses</option>
+                        {% for value, label in statuses %}
+                            <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="admin-user-filter">
+                    <label for="report-priority">Priority</label>
+                    <select id="report-priority" name="priority">
+                        <option value="">All priorities</option>
+                        {% for value, label in priorities %}
+                            <option value="{{ value }}" {% if selected_priority == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="admin-user-filter">
+                    <label for="report-organization">Organization</label>
+                    <select id="report-organization" name="organization">
+                        <option value="">All organizations</option>
+                        {% for organization in organizations %}
+                            <option value="{{ organization.pk }}" {% if selected_organization == organization.pk|stringformat:"s" %}selected{% endif %}>{{ organization.name }}{% if not organization.is_active %} (Inactive){% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <label class="admin-checkbox-label admin-report-unassigned">
+                    <input type="checkbox" name="unassigned" value="1" {% if unassigned %}checked{% endif %}>
+                    <span>Unassigned reports only</span>
+                </label>
+                <div class="admin-user-filter-actions">
+                    <button class="admin-primary-action" type="submit">Apply filters</button>
+                    {% if search or selected_county or selected_issue_type or selected_status or selected_priority or selected_organization or unassigned or invalid_filter %}
+                        <a class="admin-secondary-action" href="{% url 'admin_reports' %}">Clear filters</a>
+                    {% endif %}
+                </div>
+            </form>
+
+            {% if invalid_filter %}
+                <p class="admin-filter-feedback" role="alert">One or more filter values were invalid. Review your selections and try again.</p>
+            {% endif %}
+            {% if page_obj.object_list %}
+                <div class="admin-table-scroll">
+                    <table class="admin-table">
+                        <thead><tr><th>Issue</th><th>Location</th><th>Reported by</th><th>Organization</th><th>Priority</th><th>Status</th><th>Date</th><th></th></tr></thead>
+                        <tbody>
+                            {% for report in page_obj %}
+                                <tr>
+                                    <td class="admin-table-primary">{{ report.get_issue_type_display }}</td>
+                                    <td>{{ report.area }}, {{ report.county }}</td>
+                                    <td>{{ report.reporter.get_full_name|default:"Unnamed account" }}</td>
+                                    <td>{{ report.organization.name|default:"Unassigned" }}</td>
+                                    <td>{{ report.get_priority_display }}</td>
+                                    <td><span class="admin-status">{{ report.get_status_display }}</span></td>
+                                    <td>{{ report.created_at|date:"d M Y" }}</td>
+                                    <td><a class="admin-table-action" href="{% url 'admin_report_detail' report.id %}">Inspect</a></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                {% if search or selected_county or selected_issue_type or selected_status or selected_priority or selected_organization or unassigned or invalid_filter %}
+                    <div class="admin-users-empty">
+                        <strong>No matching reports</strong>
+                        <p>Try a different search term or adjust your filters.</p>
+                        <a class="admin-secondary-action" href="{% url 'admin_reports' %}">Clear filters</a>
+                    </div>
+                {% else %}
+                    <p class="admin-empty">No drainage reports have been submitted yet.</p>
+                {% endif %}
+            {% endif %}
+        </section>
+        {% if page_obj.has_other_pages %}
+            <nav class="admin-pagination" aria-label="Report list pagination">
+                {% if page_obj.has_previous %}
+                    <a href="{{ previous_page_url }}">Previous</a>
+                {% else %}
+                    <span class="is-disabled">Previous</span>
+                {% endif %}
+                <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                {% if page_obj.has_next %}
+                    <a href="{{ next_page_url }}">Next</a>
+                {% else %}
+                    <span class="is-disabled">Next</span>
+                {% endif %}
+            </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

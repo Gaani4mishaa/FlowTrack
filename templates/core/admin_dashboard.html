@@ -1,0 +1,237 @@
+{% extends "core/base.html" %}
+
+{% block title %}Admin Dashboard | FlowTrack{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    {% include "core/admin_sidebar.html" with active_section="dashboard" %}
+
+    <div class="admin-main">
+        <header class="admin-page-heading">
+            <div>
+                <span class="admin-eyebrow">FlowTrack overview</span>
+                <h1>Dashboard</h1>
+                <p>Monitor drainage reports, users, and maintenance activity.</p>
+            </div>
+            <span class="admin-user-name">{{ request.user.get_full_name|default:"Administrator" }}</span>
+        </header>
+
+        <section class="admin-summary-grid" aria-label="System summary">
+            <a class="admin-summary-card admin-summary-card-link" href="{% url 'admin_users' %}">
+                <span class="admin-summary-label">Total Users</span>
+                <strong>{{ total_users }}</strong>
+                <span class="admin-card-note">Registered accounts</span>
+            </a>
+            <a class="admin-summary-card admin-summary-card-link" href="{% url 'admin_reports' %}">
+                <span class="admin-summary-label">Total Reports</span>
+                <strong>{{ total_reports }}</strong>
+                <span class="admin-card-note">Drainage reports received</span>
+            </a>
+            <a class="admin-summary-card admin-summary-card-link" href="{% url 'admin_reports' %}">
+                <span class="admin-summary-label">Pending Reports</span>
+                <strong>{{ pending_reports }}</strong>
+                <span class="admin-card-note">Awaiting resolution</span>
+            </a>
+            <a class="admin-summary-card admin-summary-card-link" href="{% url 'admin_reports' %}">
+                <span class="admin-summary-label">Resolved Reports</span>
+                <strong>{{ resolved_reports }}</strong>
+                <span class="admin-card-note">Marked resolved</span>
+            </a>
+        </section>
+
+        <section class="admin-stat-section" aria-labelledby="admin-account-stats-title">
+            <div class="admin-panel-heading">
+                <div>
+                    <h2 id="admin-account-stats-title">Accounts and organizations</h2>
+                    <p>Current account roles and access status.</p>
+                </div>
+                <a class="admin-text-link" href="{% url 'admin_users' %}">Manage users</a>
+            </div>
+            <div class="admin-stat-grid">
+                <a class="admin-summary-card admin-summary-card-link" href="{% url 'admin_users' %}">
+                    <span class="admin-summary-label">Residents</span>
+                    <strong>{{ user_stats.residents }}</strong>
+                </a>
+                <a class="admin-summary-card admin-summary-card-link" href="{% url 'admin_users' %}">
+                    <span class="admin-summary-label">Managers</span>
+                    <strong>{{ user_stats.managers }}</strong>
+                </a>
+                <a class="admin-summary-card admin-summary-card-link" href="{% url 'admin_users' %}">
+                    <span class="admin-summary-label">Engineers</span>
+                    <strong>{{ user_stats.engineers }}</strong>
+                </a>
+                <a class="admin-summary-card admin-summary-card-link" href="{% url 'admin_users' %}">
+                    <span class="admin-summary-label">Active accounts</span>
+                    <strong>{{ user_stats.active }}</strong>
+                </a>
+                <a class="admin-summary-card admin-summary-card-link" href="{% url 'admin_users' %}">
+                    <span class="admin-summary-label">Inactive accounts</span>
+                    <strong>{{ user_stats.inactive }}</strong>
+                </a>
+                <a class="admin-summary-card admin-summary-card-link" href="{% url 'admin_organizations' %}">
+                    <span class="admin-summary-label">Organizations</span>
+                    <strong>{{ total_organizations }}</strong>
+                </a>
+            </div>
+        </section>
+
+        <section class="admin-stat-section" aria-labelledby="admin-report-stats-title">
+            <div class="admin-panel-heading">
+                <div>
+                    <h2 id="admin-report-stats-title">Report overview</h2>
+                    <p>Reports by workflow status and priority.</p>
+                </div>
+                <a class="admin-text-link" href="{% url 'admin_reports' %}">Manage reports</a>
+            </div>
+            <div class="admin-stat-grid">
+                <a class="admin-summary-card admin-summary-card-link" href="{% url 'admin_reports' %}">
+                    <span class="admin-summary-label">Awaiting organization assignment</span>
+                    <strong>{{ awaiting_organization_reports }}</strong>
+                </a>
+                {% for status in report_statuses %}
+                    <a class="admin-summary-card admin-summary-card-link" href="{% url 'admin_reports' %}">
+                        <span class="admin-summary-label">{{ status.label }} reports</span>
+                        <strong>{{ status.count }}</strong>
+                    </a>
+                {% endfor %}
+                <a class="admin-summary-card admin-summary-card-link" href="{% url 'admin_reports' %}">
+                    <span class="admin-summary-label">High priority</span>
+                    <strong>{{ high_priority_reports }}</strong>
+                </a>
+                <a class="admin-summary-card admin-summary-card-link" href="{% url 'admin_reports' %}">
+                    <span class="admin-summary-label">Critical priority</span>
+                    <strong>{{ critical_priority_reports }}</strong>
+                </a>
+            </div>
+        </section>
+
+        <section class="admin-stat-section" aria-labelledby="admin-work-order-stats-title">
+            <div class="admin-panel-heading">
+                <div>
+                    <h2 id="admin-work-order-stats-title">Work-order overview</h2>
+                    <p>{{ total_work_orders }} total maintenance work orders.</p>
+                </div>
+                <a class="admin-text-link" href="{% url 'admin_work_orders' %}">Manage work orders</a>
+            </div>
+            <div class="admin-stat-grid">
+                {% for status in work_order_statuses %}
+                    <a class="admin-summary-card admin-summary-card-link" href="{% url 'admin_work_orders' %}">
+                        <span class="admin-summary-label">{{ status.label }} work orders</span>
+                        <strong>{{ status.count }}</strong>
+                    </a>
+                {% endfor %}
+            </div>
+        </section>
+
+        <div class="admin-overview-grid">
+            <section class="admin-panel">
+                <div class="admin-panel-heading">
+                    <div>
+                        <h2>Recent drainage reports</h2>
+                        <p>Latest submissions across FlowTrack.</p>
+                    </div>
+                    <a class="admin-text-link" href="{% url 'admin_reports' %}">View all</a>
+                </div>
+                {% if recent_reports %}
+                    <div class="admin-table-scroll">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Issue</th>
+                                    <th>Location</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for report in recent_reports %}
+                                    <tr>
+                                        <td class="admin-table-primary">{{ report.get_issue_type_display }}</td>
+                                        <td>{{ report.area }}, {{ report.county }}</td>
+                                        <td><span class="admin-status">{{ report.get_status_display }}</span></td>
+                                        <td><a class="admin-table-action" href="{% url 'admin_report_detail' report.id %}">Inspect</a></td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="admin-empty">No drainage reports have been submitted yet.</p>
+                {% endif %}
+            </section>
+
+            <section class="admin-panel admin-activity-panel">
+                <div class="admin-panel-heading">
+                    <div>
+                        <h2>System activity</h2>
+                        <p>Live operational totals.</p>
+                    </div>
+                    <span class="admin-live-indicator">Live data</span>
+                </div>
+                <div class="admin-activity-list">
+                    <div class="admin-activity-item">
+                        <span class="admin-activity-icon is-blue" aria-hidden="true">R</span>
+                        <span class="admin-activity-label">Submitted reports</span>
+                        <strong>{{ activity.submitted_reports }}</strong>
+                    </div>
+                    <div class="admin-activity-item">
+                        <span class="admin-activity-icon is-purple" aria-hidden="true">T</span>
+                        <span class="admin-activity-label">Under review</span>
+                        <strong>{{ activity.under_review_reports }}</strong>
+                    </div>
+                    <div class="admin-activity-item">
+                        <span class="admin-activity-icon is-amber" aria-hidden="true">W</span>
+                        <span class="admin-activity-label">Active work orders</span>
+                        <strong>{{ activity.active_work_orders }}</strong>
+                    </div>
+                    <div class="admin-activity-item">
+                        <span class="admin-activity-icon is-green" aria-hidden="true">O</span>
+                        <span class="admin-activity-label">Active organizations</span>
+                        <strong>{{ activity.active_organizations }}</strong>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <section class="admin-panel admin-work-preview">
+            <div class="admin-panel-heading">
+                <div>
+                    <h2>Maintenance work orders</h2>
+                    <p>Recent assignments and their current progress.</p>
+                </div>
+                <a class="admin-text-link" href="{% url 'admin_work_orders' %}">View all</a>
+            </div>
+            {% if work_orders %}
+                <div class="admin-table-scroll">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Drainage issue</th>
+                                <th>Organization</th>
+                                <th>Engineer</th>
+                                <th>Status</th>
+                                <th>Assigned</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for work_order in work_orders %}
+                                <tr>
+                                    <td class="admin-table-primary">{{ work_order.report.get_issue_type_display }} — {{ work_order.report.area }}</td>
+                                    <td>{{ work_order.report.organization.name|default:"Unassigned" }}</td>
+                                    <td>{{ work_order.engineer.get_full_name|default:"Unnamed account" }}</td>
+                                    <td><span class="admin-status">{{ work_order.get_status_display }}</span></td>
+                                    <td>{{ work_order.assigned_at|date:"d M Y" }}</td>
+                                    <td><a class="admin-table-action" href="{% url 'admin_work_order_detail' work_order.id %}">Inspect</a></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="admin-empty">No maintenance work orders have been assigned yet.</p>
+            {% endif %}
+        </section>
+    </div>
+</div>
+{% endblock %}

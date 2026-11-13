@@ -1,0 +1,26 @@
+<aside class="admin-sidebar" aria-label="Administrator navigation">
+    <p class="admin-sidebar-label">Workspace</p>
+    <nav>
+        <a class="admin-sidebar-link{% if active_section == 'dashboard' %} is-active{% endif %}" href="{% url 'admin_dashboard' %}">
+            <span class="admin-nav-icon" aria-hidden="true">⌂</span>Dashboard
+        </a>
+        <a class="admin-sidebar-link{% if active_section == 'users' %} is-active{% endif %}" href="{% url 'admin_users' %}">
+            <span class="admin-nav-icon" aria-hidden="true">♙</span>Users
+        </a>
+        <a class="admin-sidebar-link{% if active_section == 'organizations' %} is-active{% endif %}" href="{% url 'admin_organizations' %}">
+            <span class="admin-nav-icon" aria-hidden="true">▦</span>Organizations
+        </a>
+        <a class="admin-sidebar-link{% if active_section == 'reports' %} is-active{% endif %}" href="{% url 'admin_reports' %}">
+            <span class="admin-nav-icon" aria-hidden="true">≋</span>Drainage Reports
+        </a>
+        <a class="admin-sidebar-link{% if active_section == 'work-orders' %} is-active{% endif %}" href="{% url 'admin_work_orders' %}">
+            <span class="admin-nav-icon" aria-hidden="true">⌁</span>Maintenance Work Orders
+        </a>
+        <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button class="admin-sidebar-logout" type="submit">
+                <span class="admin-nav-icon" aria-hidden="true">↪</span>Logout
+            </button>
+        </form>
+    </nav>
+</aside>

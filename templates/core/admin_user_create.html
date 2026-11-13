@@ -1,0 +1,48 @@
+{% extends "core/base.html" %}
+{% block title %}{{ page_title }} | FlowTrack Admin{% endblock %}
+{% block content %}
+<div class="admin-dashboard">
+    {% include "core/admin_sidebar.html" with active_section="users" %}
+    <div class="admin-main">
+        <header class="admin-page-heading">
+            <div>
+                <span class="admin-eyebrow">Account administration</span>
+                <h1>{{ page_title }}</h1>
+                <p>{{ page_description }}</p>
+            </div>
+        </header>
+        <section class="admin-panel admin-form-panel">
+            <div class="admin-user-create-intro">
+                <strong>Account credentials</strong>
+                <p>The user will sign in with this email address and the initial password. Passwords are securely hashed and never displayed after submission.</p>
+            </div>
+            <form method="post" class="admin-form">
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                    <div class="admin-form-errors" role="alert">{{ form.non_field_errors }}</div>
+                {% endif %}
+                <div class="admin-form-grid">
+                    {% for field in form %}
+                        <div class="admin-form-field{% if field.name == 'password' or field.name == 'confirm_password' %} admin-password-field{% endif %}">
+                            {{ field.label_tag }}
+                            {{ field }}
+                            {% if field.name == "role" %}
+                                <small>Administrator accounts cannot be created from this form.</small>
+                            {% elif field.name == "organization" %}
+                                <small>Required for Managers and Engineers. Residents are not assigned to an organization.</small>
+                            {% elif field.name == "password" %}
+                                <small>Must satisfy the configured Django password validators.</small>
+                            {% endif %}
+                            {% if field.errors %}<div class="admin-field-errors" role="alert">{{ field.errors }}</div>{% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="admin-form-actions">
+                    <button class="admin-primary-action" type="submit">Create account</button>
+                    <a class="admin-secondary-action" href="{% url 'admin_users' %}">Cancel</a>
+                </div>
+            </form>
+        </section>
+    </div>
+</div>
+{% endblock %}

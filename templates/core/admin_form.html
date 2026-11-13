@@ -1,0 +1,93 @@
+{% extends "core/base.html" %}
+{% block title %}{{ page_title }} | FlowTrack Admin{% endblock %}
+{% block content %}
+<div class="admin-dashboard">
+    {% include "core/admin_sidebar.html" with active_section=active_section|default:back_url|cut:"admin_" %}
+    <div class="admin-main">
+        <header class="admin-page-heading">
+            <div>
+                <span class="admin-eyebrow">Administrator controls</span>
+                <h1>{{ page_title }}</h1>
+                <p>{{ page_description }}</p>
+            </div>
+        </header>
+        <section class="admin-panel admin-form-panel">
+            {% if deactivation_warning %}
+                <div class="admin-organization-warning admin-organization-warning-form" role="note">
+                    <strong>Deactivation preserves existing records</strong>
+                    <p>This organization currently has {{ deactivation_warning.users }} associated user{{ deactivation_warning.users|pluralize }}, {{ deactivation_warning.reports }} report{{ deactivation_warning.reports|pluralize }}, and {{ deactivation_warning.open_work_orders }} open work order{{ deactivation_warning.open_work_orders|pluralize }}. Deactivation will not move, delete, or change these records. Manager and Engineer operations will be unavailable until the organization is reactivated.</p>
+                </div>
+            {% endif %}
+            {% if record_label %}
+                <div class="admin-record-summary">
+                    <strong>{{ record_label }}</strong>
+                    {% if record_meta %}<span>{{ record_meta }}</span>{% endif %}
+                    {% if account_summary %}
+                        <dl class="admin-account-summary">
+                            <div><dt>Email</dt><dd>{{ account_summary.email }}</dd></div>
+                            <div><dt>Phone</dt><dd>{{ account_summary.phone_number }}</dd></div>
+                            <div><dt>Role</dt><dd>{{ account_summary.role }}</dd></div>
+                            <div><dt>Organization</dt><dd>{{ account_summary.organization }}</dd></div>
+                        </dl>
+                    {% endif %}
+                </div>
+            {% endif %}
+            <form method="post" class="admin-form">
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                    <div class="admin-form-errors" role="alert">{{ form.non_field_errors }}</div>
+                {% endif %}
+                {% if form_sections %}
+                    {% for section in form_sections %}
+                        <section class="admin-form-section">
+                            <header>
+                                <h2>{{ section.title }}</h2>
+                                <p>{{ section.description }}</p>
+                            </header>
+                            <div class="admin-form-grid">
+                                {% for field in section.fields %}
+                                    <div class="admin-form-field{% if field.field.widget.input_type == 'checkbox' %} is-checkbox{% endif %}">
+                                        {% if field.field.widget.input_type == "checkbox" %}
+                                            <label class="admin-checkbox-label">{{ field }}<span>{{ field.label }}</span></label>
+                                        {% else %}
+                                            {{ field.label_tag }}
+                                            {{ field }}
+                                        {% endif %}
+                                        {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+                                        {% if field.errors %}<div class="admin-field-errors" role="alert">{{ field.errors }}</div>{% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </section>
+                    {% endfor %}
+                {% else %}
+                    <div class="admin-form-grid">
+                        {% for field in form %}
+                            <div class="admin-form-field{% if field.field.widget.input_type == 'checkbox' %} is-checkbox{% endif %}">
+                                {% if field.field.widget.input_type == "checkbox" %}
+                                    <label class="admin-checkbox-label">{{ field }}<span>{{ field.label }}</span></label>
+                                {% else %}
+                                    {{ field.label_tag }}
+                                    {{ field }}
+                                {% endif %}
+                                {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+                                {% if field.errors %}<div class="admin-field-errors" role="alert">{{ field.errors }}</div>{% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <div class="admin-form-actions">
+                    <button class="admin-primary-action" type="submit">{{ submit_label }}</button>
+                    {% if back_user_id %}
+                        <a class="admin-secondary-action" href="{% url back_url back_user_id %}">Cancel</a>
+                    {% elif back_record_id %}
+                        <a class="admin-secondary-action" href="{% url back_url back_record_id %}">Cancel</a>
+                    {% else %}
+                        <a class="admin-secondary-action" href="{% url back_url %}">Cancel</a>
+                    {% endif %}
+                </div>
+            </form>
+        </section>
+    </div>
+</div>
+{% endblock %}

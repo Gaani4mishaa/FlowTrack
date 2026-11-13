@@ -1,0 +1,121 @@
+{% extends "core/base.html" %}
+{% block title %}Organizations | FlowTrack Admin{% endblock %}
+{% block content %}
+<div class="admin-dashboard">
+    {% include "core/admin_sidebar.html" with active_section="organizations" %}
+    <div class="admin-main">
+        <header class="admin-page-heading">
+            <div>
+                <span class="admin-eyebrow">Organization administration</span>
+                <h1>Organizations</h1>
+                <p>Search organizations, review their associated work and accounts, and manage operational status.</p>
+            </div>
+            <a class="admin-primary-action" href="{% url 'admin_organization_create' %}">Add organization</a>
+        </header>
+        <section class="admin-panel">
+            <div class="admin-panel-heading">
+                <div><h2>Registered organizations</h2><p>{{ page_obj.paginator.count }} organizations</p></div>
+            </div>
+            <form method="get" class="admin-user-filters admin-organization-filters" role="search">
+                <div class="admin-user-search">
+                    <label for="organization-search">Organization name</label>
+                    <input
+                        type="search"
+                        id="organization-search"
+                        name="search"
+                        value="{{ search }}"
+                        placeholder="Search organizations"
+                    >
+                </div>
+                <div class="admin-user-filter">
+                    <label for="organization-status">Status</label>
+                    <select id="organization-status" name="status">
+                        <option value="">All statuses</option>
+                        <option value="active" {% if selected_status == "active" %}selected{% endif %}>Active</option>
+                        <option value="inactive" {% if selected_status == "inactive" %}selected{% endif %}>Inactive</option>
+                    </select>
+                </div>
+                <div class="admin-user-filter">
+                    <label for="organization-type">Type</label>
+                    <select id="organization-type" name="type">
+                        <option value="">All types</option>
+                        {% for value, label in organization_types %}
+                            <option value="{{ value }}" {% if selected_type == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="admin-user-filter">
+                    <label for="organization-county">County</label>
+                    <select id="organization-county" name="county">
+                        <option value="">All counties</option>
+                        {% for county in counties %}
+                            <option value="{{ county }}" {% if selected_county == county %}selected{% endif %}>{{ county }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="admin-user-filter-actions">
+                    <button class="admin-primary-action" type="submit">Apply filters</button>
+                    {% if search or selected_status or selected_type or selected_county %}
+                        <a class="admin-secondary-action" href="{% url 'admin_organizations' %}">Clear filters</a>
+                    {% endif %}
+                </div>
+            </form>
+
+            {% if invalid_filter %}
+                <p class="admin-filter-feedback" role="alert">One or more filter values were invalid. Review your selections and try again.</p>
+            {% endif %}
+            {% if page_obj.object_list %}
+                <div class="admin-table-scroll">
+                    <table class="admin-table">
+                        <thead><tr><th>Organization</th><th>Type</th><th>County</th><th>Accounts</th><th>Reports</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody>
+                            {% for organization in page_obj %}
+                                <tr>
+                                    <td class="admin-table-primary">{{ organization.name }}</td>
+                                    <td>{{ organization.get_organization_type_display }}</td>
+                                    <td>{{ organization.county }}</td>
+                                    <td>{{ organization.user_count }}</td>
+                                    <td>{{ organization.report_count }}</td>
+                                    <td><span class="admin-status{% if not organization.is_active %} is-inactive{% else %} is-active{% endif %}">{% if organization.is_active %}Active{% else %}Inactive{% endif %}</span></td>
+                                    <td class="admin-organization-actions">
+                                        <a class="admin-table-action" href="{% url 'admin_organization_detail' organization.id %}">View Details</a>
+                                        <a class="admin-table-action" href="{% url 'admin_organization_edit' organization.id %}">Edit</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                {% if search or selected_status or selected_type or selected_county or invalid_filter %}
+                    <div class="admin-users-empty">
+                        <strong>No matching organizations</strong>
+                        <p>Try a different search term or adjust your filters.</p>
+                        <a class="admin-secondary-action" href="{% url 'admin_organizations' %}">Clear filters</a>
+                    </div>
+                {% else %}
+                    <div class="admin-users-empty">
+                        <strong>No organizations have been registered yet.</strong>
+                        <p>Organizations added to FlowTrack will appear here.</p>
+                    </div>
+                {% endif %}
+            {% endif %}
+        </section>
+        {% if page_obj.has_other_pages %}
+            <nav class="admin-pagination" aria-label="Organization list pagination">
+                {% if page_obj.has_previous %}
+                    <a href="{{ previous_page_url }}">Previous</a>
+                {% else %}
+                    <span class="is-disabled">Previous</span>
+                {% endif %}
+                <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                {% if page_obj.has_next %}
+                    <a href="{{ next_page_url }}">Next</a>
+                {% else %}
+                    <span class="is-disabled">Next</span>
+                {% endif %}
+            </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

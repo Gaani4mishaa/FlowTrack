@@ -24,14 +24,41 @@
                 <span></span><span></span><span></span>
             </button>
 
-<div class="nav-actions" id="primary-navigation">
+<div class="nav-actions{% if not user.is_authenticated and request.resolver_match.url_name == 'home' %} is-public-home{% endif %}" id="primary-navigation">
+
+   {% if not user.is_authenticated and request.resolver_match.url_name == 'home' %}
+        <div class="home-nav-links" aria-label="Homepage sections">
+            <a href="#how-it-works">How it works</a>
+            <a href="#report-types">Report types</a>
+            <a href="#roles">For teams</a>
+        </div>
+   {% endif %}
 
    {% if user.is_authenticated %}
 
-    {% if user.role == 'manager' %}
+    {% if user.role == 'admin' %}
+        <a href="{% url 'admin_dashboard' %}" class="nav-link">
+            Admin dashboard
+        </a>
+    {% elif user.role == 'manager' %}
         {% if user.organization and user.organization.is_active %}
+            <a href="{% url 'manager_dashboard' %}" class="nav-link">
+                Manager dashboard
+            </a>
             <a href="{% url 'organization_report_queue' %}" class="nav-link nav-operations-link">
-                Organization reports
+                Report review
+            </a>
+            <a href="{% url 'manager_work_orders' %}" class="nav-link">
+                Work orders
+            </a>
+        {% endif %}
+    {% elif user.role == 'engineer' %}
+        {% if user.organization and user.organization.is_active %}
+            <a href="{% url 'engineer_dashboard' %}" class="nav-link">
+                Dashboard
+            </a>
+            <a href="{% url 'engineer_work_orders' %}" class="nav-link">
+                My work orders
             </a>
         {% endif %}
     {% elif user.role == 'resident' %}

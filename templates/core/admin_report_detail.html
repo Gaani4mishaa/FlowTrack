@@ -1,0 +1,85 @@
+{% extends "core/base.html" %}
+{% block title %}Report #{{ report.id }} | FlowTrack Admin{% endblock %}
+{% block content %}
+<div class="admin-dashboard">
+    {% include "core/admin_sidebar.html" with active_section="reports" %}
+    <div class="admin-main">
+        <header class="admin-page-heading">
+            <div>
+                <span class="admin-eyebrow">Drainage report · #{{ report.id }}</span>
+                <h1>{{ report.get_issue_type_display }}</h1>
+                <p>{{ report.area }}, {{ report.county }} · Submitted {{ report.created_at|date:"d M Y, H:i" }}</p>
+            </div>
+            <a class="admin-secondary-action" href="{% url 'admin_reports' %}">Back to reports</a>
+        </header>
+        <div class="admin-detail-grid">
+            <section class="admin-panel">
+                <div class="admin-panel-heading"><h2>Report details</h2></div>
+                <dl class="admin-detail-list">
+                    <div><dt>Status</dt><dd><span class="admin-status">{{ report.get_status_display }}</span></dd></div>
+                    <div><dt>Priority</dt><dd>{{ report.get_priority_display }}</dd></div>
+                    <div><dt>Reported by</dt><dd>{{ report.reporter.get_full_name|default:"Unnamed account" }}</dd></div>
+                    <div><dt>Reporter email</dt><dd>{{ report.reporter.email|default:"Not provided" }}</dd></div>
+                    <div><dt>Reporter username</dt><dd>{{ report.reporter.username }}</dd></div>
+                    <div><dt>Organization</dt><dd>{{ report.organization.name|default:"Unassigned" }}</dd></div>
+                    <div><dt>Location details</dt><dd>{{ report.location_description|default:"Not provided" }}</dd></div>
+                    <div><dt>Description</dt><dd>{{ report.description|default:"No description provided."|linebreaksbr }}</dd></div>
+                    <div><dt>Coordinates</dt><dd>{% if report.latitude and report.longitude %}{{ report.latitude }}, {{ report.longitude }}{% else %}Not provided{% endif %}</dd></div>
+                </dl>
+                {% if report.photo %}
+                    <a class="admin-report-image-link" href="{{ report.photo.url }}" target="_blank" rel="noopener">
+                        <img class="admin-report-image" src="{{ report.photo.url }}" alt="Photo attached to drainage report">
+                    </a>
+                {% endif %}
+            </section>
+            <section class="admin-panel">
+                <div class="admin-panel-heading"><h2>Maintenance progress</h2></div>
+                {% if report.work_order %}
+                    <dl class="admin-detail-list">
+                        <div><dt>Work order</dt><dd><a class="admin-text-link" href="{% url 'admin_work_order_detail' report.work_order.id %}">#{{ report.work_order.id }} · Inspect details</a></dd></div>
+                        <div><dt>Assigned engineer</dt><dd>{{ report.work_order.engineer.get_full_name|default:"Unnamed account" }}</dd></div>
+                        <div><dt>Work-order status</dt><dd><span class="admin-status">{{ report.work_order.get_status_display }}</span></dd></div>
+                        <div><dt>Assigned on</dt><dd>{{ report.work_order.assigned_at|date:"d M Y, H:i" }}</dd></div>
+                    </dl>
+                {% else %}
+                    <p class="admin-empty">No work order has been assigned to this report.</p>
+                {% endif %}
+            </section>
+        </div>
+        <section class="admin-panel admin-form-panel admin-report-management">
+            <div class="admin-panel-heading">
+                <div>
+                    <h2>Manage report</h2>
+                    <p>Update organization assignment, priority, and workflow status.</p>
+                </div>
+            </div>
+            {% if report.work_order %}
+                <div class="admin-organization-warning" role="note">
+                    This report has work order #{{ report.work_order.id }} assigned to
+                    {{ report.work_order.engineer.get_full_name|default:report.work_order.engineer.username }}.
+                    Its organization cannot be changed while that work order exists.
+                </div>
+            {% endif %}
+            <form method="post" class="admin-form">
+                {% csrf_token %}
+                {% if management_form.non_field_errors %}
+                    <div class="admin-form-errors" role="alert">{{ management_form.non_field_errors }}</div>
+                {% endif %}
+                <div class="admin-form-grid">
+                    {% for field in management_form %}
+                        <div class="admin-form-field">
+                            {{ field.label_tag }}
+                            {{ field }}
+                            {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+                            {% if field.errors %}<div class="admin-field-errors" role="alert">{{ field.errors }}</div>{% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="admin-form-actions">
+                    <button class="admin-primary-action" type="submit">Save report changes</button>
+                </div>
+            </form>
+        </section>
+    </div>
+</div>
+{% endblock %}

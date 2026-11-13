@@ -8,8 +8,12 @@
         <header class="operations-header">
             <div>
                 <span class="eyebrow">Organization operations</span>
-                <h1>Report review</h1>
+                <h1>Report review queue</h1>
                 <p>{{ organization.name }} · {{ organization.county }}</p>
+            </div>
+            <div class="role-dashboard-actions">
+                <a class="btn btn-secondary" href="{% url 'manager_dashboard' %}">Dashboard</a>
+                <a class="btn btn-secondary" href="{% url 'manager_work_orders' %}">Work orders</a>
             </div>
         </header>
 
@@ -26,8 +30,47 @@
 
         <div class="operations-section-heading">
             <h2>Assigned reports</h2>
-            <span>{{ reports|length }} total</span>
+            <span>{{ page_obj.paginator.count }} total</span>
         </div>
+
+        <form method="get" class="role-filter-form manager-report-filter-form" role="search">
+            <div>
+                <label for="manager-report-search">Search reports</label>
+                <input type="search" id="manager-report-search" name="search" value="{{ search }}" placeholder="Report ID, issue, location or reporter">
+            </div>
+            <div>
+                <label for="manager-report-status">Status</label>
+                <select id="manager-report-status" name="status">
+                    <option value="">All statuses</option>
+                    {% for value, label in statuses %}<option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="manager-report-priority">Priority</label>
+                <select id="manager-report-priority" name="priority">
+                    <option value="">All priorities</option>
+                    {% for value, label in priorities %}<option value="{{ value }}" {% if selected_priority == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="manager-report-county">County</label>
+                <select id="manager-report-county" name="county">
+                    <option value="">All counties</option>
+                    {% for value, label in counties %}<option value="{{ value }}" {% if selected_county == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="manager-report-issue">Issue type</label>
+                <select id="manager-report-issue" name="issue_type">
+                    <option value="">All issue types</option>
+                    {% for value, label in issue_types %}<option value="{{ value }}" {% if selected_issue_type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="role-filter-actions">
+                <button class="btn btn-primary" type="submit">Apply filters</button>
+                {% if search or selected_status or selected_priority or selected_county or selected_issue_type %}<a class="btn btn-secondary" href="{% url 'organization_report_queue' %}">Clear</a>{% endif %}
+            </div>
+        </form>
 
         {% if reports %}
             <div class="operations-report-list">
@@ -40,7 +83,12 @@
                                 <p>{{ report.area }}, {{ report.county }}</p>
                             </div>
                             <span class="report-status status-{{ report.status }}">{{ report.get_status_display }}</span>
+                            <span class="priority-badge priority-{{ report.priority }}">{{ report.get_priority_display }}</span>
                         </div>
+
+                        <p class="operations-report-detail-link">
+                            <a href="{% url 'manager_report_detail' report.id %}">View full report details</a>
+                        </p>
 
                         <div class="operations-report-meta">
                             <span>Submitted by {{ report.reporter.get_full_name|default:report.reporter.username }}</span>
@@ -57,7 +105,7 @@
                         </div>
 
                         {% if report.status == 'submitted' or report.status == 'under_review' %}
-                            <form method="post" action="{% url 'organization_report_queue' %}" class="operations-triage-form">
+                            <form method="post" action="{% url 'organization_report_queue' %}{% if filter_query %}?{{ filter_query }}{% endif %}" class="operations-triage-form">
                                 {% csrf_token %}
                                 <input type="hidden" name="report_id" value="{{ report.id }}">
                                 <label for="priority-{{ report.id }}">Priority</label>
@@ -70,16 +118,45 @@
                                     {% if report.status == 'submitted' %}Start review{% else %}Save priority{% endif %}
                                 </button>
                             </form>
+                            {% if report.status == 'under_review' %}
+                                {% if engineers %}
+                                    <form method="post" action="{% url 'assign_engineer' report.id %}{% if filter_query %}?{{ filter_query }}{% endif %}" class="operations-assignment-form">
+                                        {% csrf_token %}
+                                        <label for="engineer-{{ report.id }}">Assign engineer</label>
+                                        <select name="engineer" id="engineer-{{ report.id }}" required>
+                                            <option value="">Select an engineer</option>
+                                            {% for engineer in engineers %}
+                                                <option value="{{ engineer.id }}">{{ engineer.get_full_name|default:engineer.username }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <button class="btn btn-secondary" type="submit">Create work order</button>
+                                    </form>
+                                {% else %}
+                                    <p class="operations-locked-note">No active maintenance engineers are linked to this organization yet.</p>
+                                {% endif %}
+                            {% endif %}
+                        {% elif report.work_order %}
+                            <div class="operations-work-order-summary">
+                                <span>Work order {{ report.work_order.get_status_display }}</span>
+                                <strong>{{ report.work_order.engineer.get_full_name|default:report.work_order.engineer.username }}</strong>
+                            </div>
                         {% else %}
                             <p class="operations-locked-note">Triage is closed for this report at its current stage.</p>
                         {% endif %}
                     </article>
                 {% endfor %}
             </div>
+            {% if page_obj.has_other_pages %}
+                <nav class="role-pagination" aria-label="Report queue pages">
+                    {% if page_obj.has_previous %}<a href="?{% if filter_query %}{{ filter_query }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+                    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                    {% if page_obj.has_next %}<a href="?{% if filter_query %}{{ filter_query }}&amp;{% endif %}page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+                </nav>
+            {% endif %}
         {% else %}
             <div class="operations-empty-state">
-                <h2>No reports assigned</h2>
-                <p>Reports will appear here after a system administrator assigns them to {{ organization.name }}.</p>
+                <h2>{% if search or selected_status or selected_priority or selected_county or selected_issue_type %}No matching reports{% else %}No reports assigned{% endif %}</h2>
+                <p>{% if search or selected_status or selected_priority or selected_county or selected_issue_type %}Adjust your search or clear the filters to see more results.{% else %}Reports will appear here after a system administrator assigns them to {{ organization.name }}.{% endif %}</p>
             </div>
         {% endif %}
     </div>

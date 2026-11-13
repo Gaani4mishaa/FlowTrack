@@ -1,0 +1,148 @@
+{% extends "core/base.html" %}
+{% block title %}{{ organization.name }} | FlowTrack Admin{% endblock %}
+{% block content %}
+<div class="admin-dashboard">
+    {% include "core/admin_sidebar.html" with active_section="organizations" %}
+    <div class="admin-main">
+        <header class="admin-page-heading admin-organization-heading">
+            <div>
+                <span class="admin-eyebrow">Organization profile · #{{ organization.id }}</span>
+                <h1>{{ organization.name }}</h1>
+                <p>{{ organization.get_organization_type_display }} · {{ organization.county }}</p>
+            </div>
+            <div class="admin-user-profile-actions">
+                <a class="admin-secondary-action" href="{% url 'admin_organizations' %}">Back to Organizations</a>
+                <a class="admin-primary-action" href="{% url 'admin_organization_edit' organization.id %}">Edit Organization</a>
+            </div>
+        </header>
+
+        {% if not organization.is_active %}
+            <div class="admin-organization-warning" role="status">
+                This organization is inactive. Existing accounts, reports, and work orders remain linked, but Manager and Engineer operations are unavailable until reactivation.
+            </div>
+        {% endif %}
+
+        <section class="admin-summary-grid admin-organization-stats">
+            <article class="admin-summary-card"><span class="admin-summary-label">Associated users</span><strong>{{ total_users }}</strong></article>
+            <article class="admin-summary-card"><span class="admin-summary-label">Managers</span><strong>{{ manager_count }}</strong></article>
+            <article class="admin-summary-card"><span class="admin-summary-label">Engineers</span><strong>{{ engineer_count }}</strong></article>
+            <article class="admin-summary-card"><span class="admin-summary-label">Drainage reports</span><strong>{{ total_reports }}</strong></article>
+            <article class="admin-summary-card"><span class="admin-summary-label">Work orders</span><strong>{{ total_work_orders }}</strong></article>
+            <article class="admin-summary-card"><span class="admin-summary-label">Open work orders</span><strong>{{ open_work_orders }}</strong></article>
+        </section>
+
+        <div class="admin-detail-grid">
+            <section class="admin-panel">
+                <div class="admin-panel-heading"><div><h2>Organization information</h2><p>Contact details and current status.</p></div></div>
+                <dl class="admin-detail-list">
+                    <div><dt>Name</dt><dd>{{ organization.name }}</dd></div>
+                    <div><dt>Type</dt><dd>{{ organization.get_organization_type_display }}</dd></div>
+                    <div><dt>County</dt><dd>{{ organization.county }}</dd></div>
+                    <div><dt>Address</dt><dd>{{ organization.address|default:"Not provided" }}</dd></div>
+                    <div><dt>Phone</dt><dd>{{ organization.phone|default:"Not provided" }}</dd></div>
+                    <div><dt>Email</dt><dd>{{ organization.email|default:"Not provided" }}</dd></div>
+                    <div>
+                        <dt>Status</dt>
+                        <dd><span class="admin-status{% if organization.is_active %} is-active{% else %} is-inactive{% endif %}">{% if organization.is_active %}Active{% else %}Inactive{% endif %}</span></dd>
+                    </div>
+                    <div><dt>Created</dt><dd>{{ organization.created_at|date:"d M Y, H:i" }}</dd></div>
+                    <div><dt>Last updated</dt><dd>{{ organization.updated_at|date:"d M Y, H:i" }}</dd></div>
+                </dl>
+            </section>
+            <section class="admin-panel">
+                <div class="admin-panel-heading"><div><h2>Reports by status</h2><p>Current workflow distribution.</p></div></div>
+                <dl class="admin-detail-list">
+                    {% for status in report_statuses %}
+                        <div><dt>{{ status.label }}</dt><dd>{{ status.count }}</dd></div>
+                    {% endfor %}
+                </dl>
+            </section>
+        </div>
+
+        <section class="admin-panel admin-organization-related">
+            <div class="admin-panel-heading">
+                <div><h2>Organization Managers</h2><p>{{ manager_count }} associated account{{ manager_count|pluralize }} · showing up to 5</p></div>
+                <a class="admin-secondary-action" href="{% url 'admin_users' %}?organization={{ organization.id }}&amp;role=manager">View in Users</a>
+            </div>
+            {% if managers %}
+                <div class="admin-table-scroll">
+                    <table class="admin-table">
+                        <thead><tr><th>Name</th><th>Email</th><th>Status</th><th></th></tr></thead>
+                        <tbody>{% for managed_user in managers %}
+                            <tr>
+                                <td class="admin-table-primary">{{ managed_user.get_full_name|default:managed_user.username }}</td>
+                                <td>{{ managed_user.email|default:"—" }}</td>
+                                <td><span class="admin-status{% if managed_user.is_active %} is-active{% else %} is-inactive{% endif %}">{% if managed_user.is_active %}Active{% else %}Inactive{% endif %}</span></td>
+                                <td><a class="admin-table-action" href="{% url 'admin_user_detail' managed_user.id %}">View</a></td>
+                            </tr>
+                        {% endfor %}</tbody>
+                    </table>
+                </div>
+            {% else %}<p class="admin-empty">No Managers are assigned to this organization.</p>{% endif %}
+        </section>
+
+        <section class="admin-panel admin-organization-related">
+            <div class="admin-panel-heading">
+                <div><h2>Maintenance Engineers</h2><p>{{ engineer_count }} associated account{{ engineer_count|pluralize }} · showing up to 5</p></div>
+                <a class="admin-secondary-action" href="{% url 'admin_users' %}?organization={{ organization.id }}&amp;role=engineer">View in Users</a>
+            </div>
+            {% if engineers %}
+                <div class="admin-table-scroll">
+                    <table class="admin-table">
+                        <thead><tr><th>Name</th><th>Email</th><th>Status</th><th></th></tr></thead>
+                        <tbody>{% for managed_user in engineers %}
+                            <tr>
+                                <td class="admin-table-primary">{{ managed_user.get_full_name|default:managed_user.username }}</td>
+                                <td>{{ managed_user.email|default:"—" }}</td>
+                                <td><span class="admin-status{% if managed_user.is_active %} is-active{% else %} is-inactive{% endif %}">{% if managed_user.is_active %}Active{% else %}Inactive{% endif %}</span></td>
+                                <td><a class="admin-table-action" href="{% url 'admin_user_detail' managed_user.id %}">View</a></td>
+                            </tr>
+                        {% endfor %}</tbody>
+                    </table>
+                </div>
+            {% else %}<p class="admin-empty">No Engineers are assigned to this organization.</p>{% endif %}
+        </section>
+
+        <section class="admin-panel admin-organization-related">
+            <div class="admin-panel-heading"><div><h2>Recent drainage reports</h2><p>{{ total_reports }} assigned report{{ total_reports|pluralize }} · showing up to 5</p></div></div>
+            {% if recent_reports %}
+                <div class="admin-table-scroll">
+                    <table class="admin-table">
+                        <thead><tr><th>Report</th><th>Location</th><th>Status</th><th>Submitted</th><th></th></tr></thead>
+                        <tbody>{% for report in recent_reports %}
+                            <tr>
+                                <td class="admin-table-primary">{{ report.get_issue_type_display }}</td>
+                                <td>{{ report.area }}, {{ report.county }}</td>
+                                <td><span class="admin-status">{{ report.get_status_display }}</span></td>
+                                <td>{{ report.created_at|date:"d M Y" }}</td>
+                                <td><a class="admin-table-action" href="{% url 'admin_report_detail' report.id %}">View</a></td>
+                            </tr>
+                        {% endfor %}</tbody>
+                    </table>
+                </div>
+            {% else %}<p class="admin-empty">No drainage reports are assigned to this organization.</p>{% endif %}
+        </section>
+
+        <section class="admin-panel admin-organization-related">
+            <div class="admin-panel-heading"><div><h2>Recent maintenance work orders</h2><p>{{ total_work_orders }} assigned work order{{ total_work_orders|pluralize }} · showing up to 5</p></div></div>
+            {% if recent_work_orders %}
+                <div class="admin-table-scroll">
+                    <table class="admin-table">
+                        <thead><tr><th>Work order</th><th>Report</th><th>Engineer</th><th>Status</th><th>Assigned</th><th></th></tr></thead>
+                        <tbody>{% for work_order in recent_work_orders %}
+                            <tr>
+                                <td class="admin-table-primary">#{{ work_order.id }}</td>
+                                <td>{{ work_order.report.get_issue_type_display }} · {{ work_order.report.area }}</td>
+                                <td>{{ work_order.engineer.get_full_name|default:work_order.engineer.username }}</td>
+                                <td><span class="admin-status">{{ work_order.get_status_display }}</span></td>
+                                <td>{{ work_order.assigned_at|date:"d M Y" }}</td>
+                                <td><a class="admin-table-action" href="{% url 'admin_work_order_detail' work_order.id %}">View</a></td>
+                            </tr>
+                        {% endfor %}</tbody>
+                    </table>
+                </div>
+            {% else %}<p class="admin-empty">No work orders are linked to reports assigned to this organization.</p>{% endif %}
+        </section>
+    </div>
+</div>
+{% endblock %}

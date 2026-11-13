@@ -1,0 +1,14 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Maintenance access unavailable | FlowTrack{% endblock %}
+
+{% block content %}
+<section class="operations-page">
+    <div class="operations-container operations-access-message">
+        <span class="eyebrow">Maintenance workspace</span>
+        <h1>Engineer access is not set up</h1>
+        <p>Your account must be active, have the Maintenance Engineer role and belong to an active organization before work orders can be accessed. Ask a FlowTrack administrator to check your account setup.</p>
+        <a class="btn btn-secondary" href="{% url 'home' %}">Return to FlowTrack</a>
+    </div>
+</section>
+{% endblock %}

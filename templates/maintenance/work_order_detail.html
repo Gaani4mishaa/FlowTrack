@@ -1,0 +1,116 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Work Order #{{ work_order.id }} | FlowTrack{% endblock %}
+
+{% block content %}
+<section class="report-detail-page">
+    <div class="report-detail-container">
+        <a href="{% url 'engineer_work_orders' %}" class="back-link">← Back to my work orders</a>
+
+        <header class="report-detail-header">
+            <div>
+                <span class="eyebrow">Maintenance work order · #{{ work_order.id }}</span>
+                <h1>{{ work_order.report.get_issue_type_display }}</h1>
+                <p>{{ work_order.report.area }}, {{ work_order.report.county }} · {{ organization.name }}</p>
+            </div>
+            <span class="report-status status-{{ work_order.status }}">{{ work_order.get_status_display }}</span>
+        </header>
+
+        <div class="report-detail-layout">
+            <main class="report-detail-card">
+                <section class="detail-section">
+                    <h2>Work order</h2>
+                    <div class="detail-grid">
+                        <div class="detail-item"><span>Status</span><strong>{{ work_order.get_status_display }}</strong></div>
+                        <div class="detail-item"><span>Priority</span><strong>{{ work_order.report.get_priority_display }}</strong></div>
+                        <div class="detail-item"><span>Assigned to</span><strong>{{ work_order.engineer.get_full_name|default:work_order.engineer.username }}</strong></div>
+                        <div class="detail-item"><span>Assigned by</span><strong>{{ work_order.assigned_by.get_full_name|default:work_order.assigned_by.username }}</strong></div>
+                        <div class="detail-item"><span>Assigned on</span><strong>{{ work_order.assigned_at|date:"d M Y, H:i" }}</strong></div>
+                        <div class="detail-item"><span>Started on</span><strong>{{ work_order.started_at|date:"d M Y, H:i"|default:"Not started" }}</strong></div>
+                        <div class="detail-item"><span>Resolved on</span><strong>{{ work_order.resolved_at|date:"d M Y, H:i"|default:"Not resolved" }}</strong></div>
+                    </div>
+                </section>
+
+                <section class="detail-section">
+                    <h2>Drainage report #{{ work_order.report.id }}</h2>
+                    <div class="detail-grid">
+                        <div class="detail-item"><span>Issue type</span><strong>{{ work_order.report.get_issue_type_display }}</strong></div>
+                        <div class="detail-item"><span>County</span><strong>{{ work_order.report.county }}</strong></div>
+                        <div class="detail-item"><span>Area</span><strong>{{ work_order.report.area }}</strong></div>
+                        <div class="detail-item"><span>Report status</span><strong>{{ work_order.report.get_status_display }}</strong></div>
+                    </div>
+                </section>
+
+                <section class="detail-section">
+                    <h2>Location</h2>
+                    {% if work_order.report.location_description %}
+                        <p class="detail-text">{{ work_order.report.location_description }}</p>
+                    {% else %}
+                        <p class="detail-muted">No additional location details were provided.</p>
+                    {% endif %}
+                    {% if work_order.report.latitude != None and work_order.report.longitude != None %}
+                        <div class="coordinates">
+                            <span>Coordinates</span>
+                            <strong>{{ work_order.report.latitude }}, {{ work_order.report.longitude }}</strong>
+                            <a href="https://www.google.com/maps?q={{ work_order.report.latitude }},{{ work_order.report.longitude }}" target="_blank" rel="noopener">Open reported location</a>
+                        </div>
+                    {% endif %}
+                </section>
+
+                <section class="detail-section">
+                    <h2>Issue description</h2>
+                    {% if work_order.report.description %}
+                        <p class="detail-text">{{ work_order.report.description|linebreaksbr }}</p>
+                    {% else %}
+                        <p class="detail-muted">No additional description was provided.</p>
+                    {% endif %}
+                </section>
+
+                {% if work_order.report.photo %}
+                    <section class="detail-section">
+                        <h2>Photographic evidence</h2>
+                        <div class="report-detail-photo">
+                            <a href="{{ work_order.report.photo.url }}" target="_blank" rel="noopener">
+                                <img src="{{ work_order.report.photo.url }}" alt="Evidence attached to drainage report #{{ work_order.report.id }}">
+                            </a>
+                        </div>
+                    </section>
+                {% endif %}
+
+                {% if work_order.resolution_notes %}
+                    <section class="detail-section">
+                        <h2>Work notes</h2>
+                        <p class="detail-text">{{ work_order.resolution_notes|linebreaksbr }}</p>
+                    </section>
+                {% endif %}
+            </main>
+
+            <aside class="report-detail-side">
+                <section class="status-card">
+                    <span class="eyebrow">Work progress</span>
+                    <h2>{{ work_order.get_status_display }}</h2>
+                    {% if work_order.status == 'assigned' or work_order.status == 'in_progress' %}
+                        <form method="post" action="{% url 'engineer_work_order_detail' work_order.id %}" class="operations-triage-form operations-detail-form work-order-update-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="work_order_id" value="{{ work_order.id }}">
+                            <label for="next-status-{{ work_order.id }}">Next step</label>
+                            {{ work_order.progress_form.status }}
+                            {% if work_order.status == 'in_progress' %}
+                                <label for="resolution-notes-{{ work_order.id }}">Work completed</label>
+                                {{ work_order.progress_form.resolution_notes }}
+                            {% endif %}
+                            <button class="btn btn-primary" type="submit">
+                                {% if work_order.status == 'assigned' %}Start work{% else %}Mark resolved{% endif %}
+                            </button>
+                        </form>
+                    {% else %}
+                        <p>This work order is complete.</p>
+                        {% if work_order.resolved_at %}<p>Resolved {{ work_order.resolved_at|date:"d M Y, H:i" }}</p>{% endif %}
+                    {% endif %}
+                    <a class="btn btn-secondary operations-detail-back" href="{% url 'engineer_work_orders' %}">Return to my work orders</a>
+                </section>
+            </aside>
+        </div>
+    </div>
+</section>
+{% endblock %}

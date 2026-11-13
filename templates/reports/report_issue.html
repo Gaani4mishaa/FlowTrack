@@ -67,11 +67,12 @@
                             type="button"
                             class="location-button"
                             id="use-location"
+                            aria-busy="false"
                         >
                             <span class="location-button-icon">⌖</span>
                             <span>
-                                <strong>Use my current location</strong>
-                                <small>Allow FlowTrack to access your location</small>
+                                <strong id="location-button-label">Use my current location</strong>
+                                <small>County and area still need to be entered manually.</small>
                             </span>
                         </button>
 
@@ -107,8 +108,12 @@
                     {% for error in form.latitude.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
                     {% for error in form.longitude.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
 
-                    <div class="location-status" id="location-status">
-                        Location not captured yet.
+                    <div class="location-status" id="location-status" role="status" aria-live="polite">
+                        {% if form.latitude.value != None and form.longitude.value != None %}
+                            Coordinates ready: {{ form.latitude.value }}, {{ form.longitude.value }}
+                        {% else %}
+                            Location not captured yet. You can enter the county and area manually.
+                        {% endif %}
                     </div>
                 </div>
 
@@ -143,6 +148,7 @@
                     {% for error in form.photo.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
                     {% if is_edit and report.photo %}<p class="current-photo">Current photo: <a href="{{ report.photo.url }}" target="_blank" rel="noopener">View uploaded evidence</a></p>{% endif %}
                     <div id="photo-preview" class="photo-preview"></div>
+                    <div id="photo-status" class="location-status" role="status" aria-live="polite" hidden></div>
                 </div>
 
 
@@ -243,9 +249,11 @@
     const description = document.getElementById('description');
     const characterCount = document.getElementById('character-count');
     const useLocationButton = document.getElementById('use-location');
+    const locationButtonLabel = document.getElementById('location-button-label');
     const locationStatus = document.getElementById('location-status');
     const latitudeInput = document.getElementById('latitude');
     const longitudeInput = document.getElementById('longitude');
+    const photoStatus = document.getElementById('photo-status');
 
     /* Client-side checks improve feedback; server-side validation remains authoritative. */
     photoInput.addEventListener('change', () => {
@@ -261,7 +269,8 @@
         const maxFileSize = 5 * 1024 * 1024;
 
         if (file.size > maxFileSize) {
-            locationStatus.textContent = 'The photo is too large. Choose an image smaller than 5 MB.';
+            photoStatus.textContent = 'The photo is too large. Choose an image smaller than 5 MB.';
+            photoStatus.hidden = false;
             photoInput.value = '';
             return;
         }
@@ -274,10 +283,13 @@
         ];
 
         if (!allowedTypes.includes(file.type)) {
-            locationStatus.textContent = 'Choose a JPG, PNG or WEBP image.';
+            photoStatus.textContent = 'Choose a JPG, PNG or WEBP image.';
+            photoStatus.hidden = false;
             photoInput.value = '';
             return;
         }
+        photoStatus.textContent = '';
+        photoStatus.hidden = true;
 
         const previewWrapper = document.createElement('div');
         previewWrapper.className = 'photo-preview-item';
@@ -312,37 +324,76 @@
 
     /* Current location */
     useLocationButton.addEventListener('click', () => {
+        if (!window.isSecureContext) {
+            locationStatus.textContent =
+                'Browser location requires a secure connection. Enter the location manually or use HTTPS.';
+            return;
+        }
+
         if (!navigator.geolocation) {
             locationStatus.textContent =
-                'Location services are not supported by this browser.';
+                'Location services are not supported by this browser. Enter the location manually.';
             return;
         }
 
         useLocationButton.disabled = true;
+        useLocationButton.setAttribute('aria-busy', 'true');
+        locationButtonLabel.textContent = 'Getting your location…';
         locationStatus.textContent = 'Getting your location...';
 
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                latitudeInput.value = position.coords.latitude;
-                longitudeInput.value = position.coords.longitude;
+        const finishLocationRequest = () => {
+            useLocationButton.disabled = false;
+            useLocationButton.setAttribute('aria-busy', 'false');
+            locationButtonLabel.textContent = 'Use my current location';
+        };
 
-                locationStatus.textContent =
-                    'Location captured successfully.';
+        try {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const latitude = Number(position.coords.latitude);
+                    const longitude = Number(position.coords.longitude);
 
-                useLocationButton.disabled = false;
-            },
-            () => {
-                locationStatus.textContent =
-                    'We could not access your location. You can continue by entering the location manually.';
+                    if (
+                        !Number.isFinite(latitude) ||
+                        !Number.isFinite(longitude) ||
+                        latitude < -90 ||
+                        latitude > 90 ||
+                        longitude < -180 ||
+                        longitude > 180
+                    ) {
+                        locationStatus.textContent =
+                            'The browser returned invalid coordinates. Enter the location manually.';
+                    } else {
+                        latitudeInput.value = latitude.toFixed(6);
+                        longitudeInput.value = longitude.toFixed(6);
+                        locationStatus.textContent =
+                            `Coordinates captured: ${latitudeInput.value}, ${longitudeInput.value}. County and area must still be entered manually.`;
+                    }
 
-                useLocationButton.disabled = false;
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 60000
-            }
-        );
+                    finishLocationRequest();
+                },
+                (error) => {
+                    const messages = {
+                        1: 'Location permission was denied. Allow access in your browser settings or enter the location manually.',
+                        2: 'Your location is currently unavailable. Try again or enter the location manually.',
+                        3: 'The location request timed out. Try again or enter the location manually.'
+                    };
+                    locationStatus.textContent =
+                        messages[error.code] ||
+                        'Your location could not be retrieved. Try again or enter the location manually.';
+                    finishLocationRequest();
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 60000
+                }
+            );
+        } catch (error) {
+            locationStatus.textContent =
+                'The location request could not be started. Try again or enter the location manually.';
+            finishLocationRequest();
+        }
     });
 </script>
 

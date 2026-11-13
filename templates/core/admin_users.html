@@ -1,0 +1,128 @@
+{% extends "core/base.html" %}
+{% block title %}Users | FlowTrack Admin{% endblock %}
+{% block content %}
+<div class="admin-dashboard">
+    {% include "core/admin_sidebar.html" with active_section="users" %}
+    <div class="admin-main">
+        <header class="admin-page-heading">
+            <div>
+                <span class="admin-eyebrow">Account administration</span>
+                <h1>Users</h1>
+                <p>Search accounts and filter by role, organization, or access status.</p>
+            </div>
+            <a class="admin-primary-action" href="{% url 'admin_user_create' %}">Create User</a>
+        </header>
+        <section class="admin-panel">
+            <div class="admin-panel-heading">
+                <div>
+                    <h2>Registered accounts</h2>
+                    <p>{{ page_obj.paginator.count }} matching account{{ page_obj.paginator.count|pluralize }}</p>
+                </div>
+            </div>
+            <form method="get" class="admin-user-filters" role="search">
+                <div class="admin-user-search">
+                    <label for="user-search">Search users</label>
+                    <input
+                        type="search"
+                        id="user-search"
+                        name="search"
+                        value="{{ search }}"
+                        placeholder="Name or email address"
+                    >
+                </div>
+                <div class="admin-user-filter">
+                    <label for="user-role">Role</label>
+                    <select id="user-role" name="role">
+                        <option value="">All roles</option>
+                        {% for value, label in role_choices %}
+                            <option value="{{ value }}" {% if selected_role == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="admin-user-filter">
+                    <label for="user-organization">Organization</label>
+                    <select id="user-organization" name="organization">
+                        <option value="">All organizations</option>
+                        {% for organization in organizations %}
+                            <option value="{{ organization.id }}" {% if selected_organization == organization.id|stringformat:"s" %}selected{% endif %}>
+                                {{ organization.name }}{% if not organization.is_active %} (Inactive){% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="admin-user-filter">
+                    <label for="user-status">Account status</label>
+                    <select id="user-status" name="status">
+                        <option value="">All statuses</option>
+                        <option value="active" {% if selected_status == "active" %}selected{% endif %}>Active</option>
+                        <option value="inactive" {% if selected_status == "inactive" %}selected{% endif %}>Inactive</option>
+                    </select>
+                </div>
+                <div class="admin-user-filter-actions">
+                    <button class="admin-primary-action" type="submit">Apply filters</button>
+                    {% if search or selected_role or selected_organization or selected_status %}
+                        <a class="admin-secondary-action" href="{% url 'admin_users' %}">Clear filters</a>
+                    {% endif %}
+                </div>
+            </form>
+
+            {% if invalid_filter %}
+                <p class="admin-filter-feedback" role="alert">One or more filter values were invalid. Review your selections and try again.</p>
+            {% endif %}
+
+            {% if page_obj.object_list %}
+                <div class="admin-table-scroll">
+                    <table class="admin-table">
+                        <thead><tr><th>Name</th><th>Role</th><th>Organization</th><th>Account</th><th></th></tr></thead>
+                        <tbody>
+                            {% for managed_user in page_obj %}
+                                <tr>
+                                    <td class="admin-table-primary">{{ managed_user.get_full_name|default:"Unnamed account" }}</td>
+                                    <td><span class="admin-role-badge role-{{ managed_user.role }}">{{ managed_user.get_role_display }}</span></td>
+                                    <td>{{ managed_user.organization.name|default:"—" }}</td>
+                                    <td><span class="admin-status{% if not managed_user.is_active %} is-inactive{% else %} is-active{% endif %}">{% if managed_user.is_active %}Active{% else %}Inactive{% endif %}</span></td>
+                                    <td>
+                                        {% if managed_user.is_staff or managed_user.is_superuser %}
+                                            <span class="admin-muted">Protected account</span>
+                                        {% else %}
+                                            <a class="admin-table-action" href="{% url 'admin_user_detail' managed_user.id %}">Manage</a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                {% if search or selected_role or selected_organization or selected_status or invalid_filter %}
+                    <div class="admin-users-empty">
+                        <strong>No matching users</strong>
+                        <p>Try a different search term or adjust your filters.</p>
+                        <a class="admin-secondary-action" href="{% url 'admin_users' %}">Clear filters</a>
+                    </div>
+                {% else %}
+                    <div class="admin-users-empty">
+                        <strong>No users have been registered yet.</strong>
+                        <p>Registered accounts will appear here.</p>
+                    </div>
+                {% endif %}
+            {% endif %}
+        </section>
+        {% if page_obj.has_other_pages %}
+            <nav class="admin-pagination" aria-label="User list pagination">
+                {% if page_obj.has_previous %}
+                    <a href="{{ previous_page_url }}">Previous</a>
+                {% else %}
+                    <span class="is-disabled">Previous</span>
+                {% endif %}
+                <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                {% if page_obj.has_next %}
+                    <a href="{{ next_page_url }}">Next</a>
+                {% else %}
+                    <span class="is-disabled">Next</span>
+                {% endif %}
+            </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

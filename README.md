@@ -11,11 +11,16 @@ FlowTrack is a Django web app for reporting drainage problems and following thei
 - Report history and status display
 - Edit or delete a report while it is still marked **Submitted**
 - Organization manager queue for explicitly assigned reports, priority updates and starting review
+- Manager assignment of an under-review report to an active engineer in the same organization
+- Engineer work-order queue with `Assigned`, `In Progress` and `Resolved` steps
+- Required resolution note before an engineer can complete a work order
 - Django admin for managing users, organizations and reports
 
-Reports are assigned to organizations manually by an administrator in Django admin. Organization managers can see only reports linked to their active organization. The current manager workflow does not assign engineers or manage maintenance work orders.
+Reports are assigned to organizations manually by an administrator in Django admin. Organization managers can see only reports linked to their active organization and assign reviewed reports to active engineers from that organization. Engineers can see only work orders assigned to their own account.
 
 To route a report, a staff administrator opens the report in Django admin and selects its organization. Organization manager accounts must be linked to an active organization before they can use the review queue. There is no automatic county-based routing.
+
+An organization manager assigns an engineer from the review queue after marking a report **Under Review**. The engineer can start work and later mark the work order resolved with a summary. One work order is supported per report; reassignment, before/after maintenance photos, a full audit history and work-order notifications are not implemented yet.
 
 The forecasting, sensor, mapping and analytics ideas in the project proposal are not implemented yet. The current prototype records and tracks reports; it does not predict floods or dispatch maintenance crews.
 

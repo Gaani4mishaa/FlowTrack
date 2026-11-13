@@ -1,0 +1,139 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Report #{{ report.id }} | Manager | FlowTrack{% endblock %}
+
+{% block content %}
+<section class="report-detail-page">
+    <div class="report-detail-container">
+        <a href="{% url 'organization_report_queue' %}" class="back-link">← Back to report queue</a>
+
+        <header class="report-detail-header">
+            <div>
+                <span class="eyebrow">Organization report · #{{ report.id }}</span>
+                <h1>{{ report.get_issue_type_display }}</h1>
+                <p>{{ organization.name }} · Submitted {{ report.created_at|date:"d M Y, H:i" }}</p>
+            </div>
+            <span class="report-status status-{{ report.status }}">{{ report.get_status_display }}</span>
+        </header>
+
+        <div class="report-detail-layout">
+            <main class="report-detail-card">
+                <section class="detail-section">
+                    <h2>Report details</h2>
+                    <div class="detail-grid">
+                        <div class="detail-item"><span>Issue type</span><strong>{{ report.get_issue_type_display }}</strong></div>
+                        <div class="detail-item"><span>Priority</span><strong>{{ report.get_priority_display }}</strong></div>
+                        <div class="detail-item"><span>County</span><strong>{{ report.county }}</strong></div>
+                        <div class="detail-item"><span>Area</span><strong>{{ report.area }}</strong></div>
+                        <div class="detail-item"><span>Submitted by</span><strong>{{ report.reporter.get_full_name|default:report.reporter.username }}</strong></div>
+                        <div class="detail-item"><span>Current status</span><strong>{{ report.get_status_display }}</strong></div>
+                    </div>
+                </section>
+
+                <section class="detail-section">
+                    <h2>Location</h2>
+                    {% if report.location_description %}
+                        <p class="detail-text">{{ report.location_description }}</p>
+                    {% else %}
+                        <p class="detail-muted">No additional location details were provided.</p>
+                    {% endif %}
+                    {% if report.latitude != None and report.longitude != None %}
+                        <div class="coordinates">
+                            <span>Coordinates</span>
+                            <strong>{{ report.latitude }}, {{ report.longitude }}</strong>
+                            <a href="https://www.google.com/maps?q={{ report.latitude }},{{ report.longitude }}" target="_blank" rel="noopener">Open map</a>
+                        </div>
+                    {% endif %}
+                </section>
+
+                <section class="detail-section">
+                    <h2>Description</h2>
+                    {% if report.description %}
+                        <p class="detail-text">{{ report.description|linebreaksbr }}</p>
+                    {% else %}
+                        <p class="detail-muted">No additional description was provided.</p>
+                    {% endif %}
+                </section>
+
+                {% if report.photo %}
+                    <section class="detail-section">
+                        <h2>Photographic evidence</h2>
+                        <div class="report-detail-photo">
+                            <a href="{{ report.photo.url }}" target="_blank" rel="noopener">
+                                <img src="{{ report.photo.url }}" alt="Evidence uploaded for report #{{ report.id }}">
+                            </a>
+                        </div>
+                    </section>
+                {% endif %}
+
+                {% if report.work_order %}
+                    <section class="detail-section">
+                        <h2>Maintenance work order</h2>
+                        <div class="detail-grid">
+                            <div class="detail-item"><span>Work-order status</span><strong>{{ report.work_order.get_status_display }}</strong></div>
+                            <div class="detail-item"><span>Assigned engineer</span><strong>{{ report.work_order.engineer.get_full_name|default:report.work_order.engineer.username }}</strong></div>
+                            <div class="detail-item"><span>Assigned by</span><strong>{{ report.work_order.assigned_by.get_full_name|default:report.work_order.assigned_by.username }}</strong></div>
+                            <div class="detail-item"><span>Assigned on</span><strong>{{ report.work_order.assigned_at|date:"d M Y, H:i" }}</strong></div>
+                            {% if report.work_order.started_at %}
+                                <div class="detail-item"><span>Started on</span><strong>{{ report.work_order.started_at|date:"d M Y, H:i" }}</strong></div>
+                            {% endif %}
+                            {% if report.work_order.resolved_at %}
+                                <div class="detail-item"><span>Resolved on</span><strong>{{ report.work_order.resolved_at|date:"d M Y, H:i" }}</strong></div>
+                            {% endif %}
+                        </div>
+                        {% if report.work_order.resolution_notes %}
+                            <p class="detail-text">{{ report.work_order.resolution_notes|linebreaksbr }}</p>
+                        {% endif %}
+                    </section>
+                {% endif %}
+            </main>
+
+            <aside class="report-detail-side">
+                <section class="status-card">
+                    <span class="eyebrow">Manager actions</span>
+                    <h2>{{ report.get_status_display }}</h2>
+                    {% if can_triage %}
+                        <form method="post" action="{% url 'organization_report_queue' %}" class="operations-triage-form operations-detail-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="report_id" value="{{ report.id }}">
+                            <label for="priority-{{ report.id }}">Priority</label>
+                            <select name="priority" id="priority-{{ report.id }}" required>
+                                {% for value, label in priority_choices %}
+                                    <option value="{{ value }}" {% if report.priority == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            <button class="btn btn-primary" type="submit">
+                                {% if report.status == 'submitted' %}Start review{% else %}Save priority{% endif %}
+                            </button>
+                        </form>
+
+                        {% if report.status == 'under_review' %}
+                            {% if engineers %}
+                                <form method="post" action="{% url 'assign_engineer' report.id %}" class="operations-assignment-form operations-detail-form">
+                                    {% csrf_token %}
+                                    <label for="engineer-{{ report.id }}">Assign engineer</label>
+                                    <select name="engineer" id="engineer-{{ report.id }}" required>
+                                        <option value="">Select an engineer</option>
+                                        {% for engineer in engineers %}
+                                            <option value="{{ engineer.id }}">{{ engineer.get_full_name|default:engineer.username }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button class="btn btn-secondary" type="submit">Create work order</button>
+                                </form>
+                            {% else %}
+                                <p class="operations-locked-note">No active maintenance engineers are linked to this organization.</p>
+                            {% endif %}
+                        {% endif %}
+                    {% elif report.work_order %}
+                        <p>Assigned engineer: {{ report.work_order.engineer.get_full_name|default:report.work_order.engineer.username }}</p>
+                        <p>Work order is {{ report.work_order.get_status_display|lower }}.</p>
+                    {% else %}
+                        <p>This report is no longer available for review or assignment.</p>
+                    {% endif %}
+                    <a class="btn btn-secondary operations-detail-back" href="{% url 'organization_report_queue' %}">Return to report queue</a>
+                </section>
+            </aside>
+        </div>
+    </div>
+</section>
+{% endblock %}

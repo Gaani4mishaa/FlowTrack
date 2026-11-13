@@ -1,0 +1,54 @@
+{% extends "core/base.html" %}
+{% block title %}{{ managed_user.get_full_name|default:managed_user.username }} | FlowTrack Admin{% endblock %}
+{% block content %}
+<div class="admin-dashboard">
+    {% include "core/admin_sidebar.html" with active_section="users" %}
+    <div class="admin-main">
+        <header class="admin-page-heading admin-user-profile-heading">
+            <div>
+                <span class="admin-eyebrow">Account profile · #{{ managed_user.id }}</span>
+                <h1>{{ managed_user.get_full_name|default:"Unnamed account" }}</h1>
+                <p>{{ managed_user.email|default:"No email address provided" }}</p>
+            </div>
+            <div class="admin-user-profile-actions">
+                <a class="admin-secondary-action" href="{% url 'admin_users' %}">Back to Users</a>
+                <a class="admin-secondary-action" href="{% url 'admin_user_password_reset' managed_user.id %}">Reset Password</a>
+                <a class="admin-primary-action" href="{% url 'admin_user_edit' managed_user.id %}">Edit User</a>
+            </div>
+        </header>
+
+        <div class="admin-user-profile-grid">
+            <section class="admin-panel">
+                <div class="admin-panel-heading">
+                    <div><h2>Personal information</h2><p>Contact details for this account.</p></div>
+                </div>
+                <dl class="admin-detail-list">
+                    <div><dt>Full name</dt><dd>{{ managed_user.get_full_name|default:"Not provided" }}</dd></div>
+                    <div><dt>Email address</dt><dd>{{ managed_user.email|default:"Not provided" }}</dd></div>
+                    <div><dt>Username</dt><dd>{{ managed_user.username }}</dd></div>
+                    <div><dt>Phone number</dt><dd>{{ managed_user.phone_number|default:"Not provided" }}</dd></div>
+                </dl>
+            </section>
+
+            <section class="admin-panel">
+                <div class="admin-panel-heading">
+                    <div><h2>Role and access</h2><p>Current FlowTrack access configuration.</p></div>
+                </div>
+                <dl class="admin-detail-list">
+                    <div>
+                        <dt>Role</dt>
+                        <dd><span class="admin-role-badge role-{{ managed_user.role }}">{{ managed_user.get_role_display }}</span></dd>
+                    </div>
+                    <div><dt>Organization</dt><dd>{{ managed_user.organization.name|default:"Not assigned" }}</dd></div>
+                    <div>
+                        <dt>Account status</dt>
+                        <dd><span class="admin-status{% if managed_user.is_active %} is-active{% else %} is-inactive{% endif %}">{% if managed_user.is_active %}Active{% else %}Inactive{% endif %}</span></dd>
+                    </div>
+                    <div><dt>Registered</dt><dd>{{ managed_user.date_joined|date:"d M Y, H:i" }}</dd></div>
+                    <div><dt>Last sign-in</dt><dd>{{ managed_user.last_login|date:"d M Y, H:i"|default:"Never signed in" }}</dd></div>
+                </dl>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}

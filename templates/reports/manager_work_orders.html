@@ -1,0 +1,80 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Organization Work Orders | FlowTrack{% endblock %}
+
+{% block content %}
+<section class="operations-page">
+    <div class="operations-container role-dashboard">
+        <header class="operations-header">
+            <div>
+                <span class="eyebrow">Organization workspace</span>
+                <h1>Maintenance work orders</h1>
+                <p>Track work assigned to engineers in {{ organization.name }}.</p>
+            </div>
+            <a class="btn btn-secondary" href="{% url 'manager_dashboard' %}">Manager dashboard</a>
+        </header>
+
+        <section class="role-stat-grid role-stat-grid-compact" aria-label="Work order summary">
+            <article class="role-stat-card"><span class="role-stat-icon" aria-hidden="true">01</span><div><span>Assigned</span><strong>{{ assigned_count }}</strong></div></article>
+            <article class="role-stat-card"><span class="role-stat-icon role-stat-active" aria-hidden="true">02</span><div><span>In progress</span><strong>{{ in_progress_count }}</strong></div></article>
+            <article class="role-stat-card"><span class="role-stat-icon role-stat-complete" aria-hidden="true">03</span><div><span>Resolved</span><strong>{{ resolved_count }}</strong></div></article>
+        </section>
+
+        <section class="role-panel">
+            <div class="role-panel-heading">
+                <div><h2>Work orders</h2><p>{{ page_obj.paginator.count }} total for this organization</p></div>
+            </div>
+            <form method="get" class="role-filter-form" role="search">
+                <div>
+                    <label for="manager-work-search">Search work orders</label>
+                    <input type="search" id="manager-work-search" name="search" value="{{ search }}" placeholder="Report ID, issue, location or engineer">
+                </div>
+                <div>
+                    <label for="manager-work-status">Status</label>
+                    <select id="manager-work-status" name="status">
+                        <option value="">All statuses</option>
+                        {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="role-filter-actions">
+                    <button class="btn btn-primary" type="submit">Apply filters</button>
+                    {% if search or selected_status %}<a class="btn btn-secondary" href="{% url 'manager_work_orders' %}">Clear</a>{% endif %}
+                </div>
+            </form>
+
+            {% if work_orders %}
+                <div class="role-record-list">
+                    {% for work_order in work_orders %}
+                        <a class="role-record" href="{% url 'manager_report_detail' work_order.report_id %}">
+                            <span class="role-record-mark" aria-hidden="true">WO{{ work_order.id }}</span>
+                            <span class="role-record-main">
+                                <strong>{{ work_order.report.get_issue_type_display }} · {{ work_order.report.area }}, {{ work_order.report.county }}</strong>
+                                <small>Engineer: {{ work_order.engineer.get_full_name|default:work_order.engineer.username }} · Assigned by {{ work_order.assigned_by.get_full_name|default:work_order.assigned_by.username }} · {{ work_order.assigned_at|date:"d M Y, H:i" }}</small>
+                                {% if work_order.resolution_notes %}<small class="role-record-note">{{ work_order.resolution_notes|truncatewords:24 }}</small>{% endif %}
+                            </span>
+                            <span class="role-record-tags">
+                                <span class="report-status status-{{ work_order.status }}">{{ work_order.get_status_display }}</span>
+                                <span class="priority-badge priority-{{ work_order.report.priority }}">{{ work_order.report.get_priority_display }}</span>
+                            </span>
+                        </a>
+                    {% endfor %}
+                </div>
+                {% if page_obj.has_other_pages %}
+                    <nav class="role-pagination" aria-label="Work order pages">
+                        {% if page_obj.has_previous %}<a href="?{% if filter_query %}{{ filter_query }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+                        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                        {% if page_obj.has_next %}<a href="?{% if filter_query %}{{ filter_query }}&amp;{% endif %}page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="operations-empty-state">
+                    <h3>{% if search or selected_status %}No matching work orders{% else %}No work orders assigned{% endif %}</h3>
+                    <p>{% if search or selected_status %}Adjust your search or clear the filters to see more results.{% else %}Work orders created for reports in this organization will appear here.{% endif %}</p>
+                </div>
+            {% endif %}
+        </section>
+    </div>
+</section>
+{% endblock %}
